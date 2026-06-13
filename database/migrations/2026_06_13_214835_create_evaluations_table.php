@@ -11,23 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('evaluations', function (Blueprint $table) {
+     Schema::create('evaluations', function (Blueprint $table) {
     $table->id();
-
-    $table->foreignId('project_id')
-          ->constrained('projects')
-          ->cascadeOnDelete();
-
-    $table->foreignId('evaluator_id')
-          ->constrained('users')
-          ->cascadeOnDelete();
-
-    $table->decimal('score', 5, 2);
-
+    $table->foreignId('team_id')->constrained('teams')->cascadeOnDelete();
+    $table->foreignId('evaluator_id')->constrained('users')->restrictOnDelete();
+    $table->enum('evaluation_type', ['SUPERVISOR', 'EXAMINER']);
+    $table->decimal('score_documentation', 5, 2)->nullable();
+    $table->decimal('score_implementation', 5, 2)->nullable();
+    $table->decimal('score_presentation', 5, 2)->nullable();
+    $table->decimal('total_score', 5, 2)->nullable();
     $table->text('feedback')->nullable();
-
     $table->dateTime('created_at')->useCurrent();
-  });
+});
     }
 
     /**

@@ -11,24 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('files', function (Blueprint $table) {
-    $table->id();
-
-    $table->foreignId('project_id')
-          ->constrained('projects')
-          ->cascadeOnDelete();
-
-    $table->foreignId('uploaded_by')
-          ->constrained('users')
-          ->cascadeOnDelete();
-
-    $table->string('file_name');
-    $table->string('file_path');
-    $table->string('file_type', 50)->nullable();
-    $table->bigInteger('file_size')->nullable();
-
-    $table->dateTime('uploaded_at')->useCurrent();
- });
+       Schema::create('files', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+        $table->string('filename', 255);
+        $table->string('path', 500);
+        $table->bigInteger('size');
+        $table->smallInteger('version')->default(1);
+        $table->boolean('is_final_submission')->default(false);
+        $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();
+        $table->dateTime('uploaded_at')->useCurrent();
+    });
     }
 
     /**

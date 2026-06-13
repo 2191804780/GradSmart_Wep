@@ -13,19 +13,12 @@ return new class extends Migration
     {
         Schema::create('comments', function (Blueprint $table) {
     $table->id();
-
-    $table->foreignId('project_id')
-          ->constrained('projects')
-          ->cascadeOnDelete();
-
-    $table->foreignId('user_id')
-          ->constrained('users')
-          ->cascadeOnDelete();
-
+    $table->foreignId('project_id')->nullable()->constrained('projects')->cascadeOnDelete();
+    $table->foreignId('task_id')->nullable()->constrained('tasks')->cascadeOnDelete();
+    $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
     $table->text('content');
-
     $table->dateTime('created_at')->useCurrent();
-});
+    });
     }
 
     /**

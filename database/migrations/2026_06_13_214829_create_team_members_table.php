@@ -12,25 +12,13 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('team_members', function (Blueprint $table) {
-    $table->id();
+        $table->foreignId('team_id')->constrained('teams')->cascadeOnDelete();
+        $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+        $table->boolean('is_leader')->default(false);
+        $table->dateTime('joined_at')->useCurrent();
 
-    $table->foreignId('team_id')
-          ->constrained('teams')
-          ->cascadeOnDelete();
-
-    $table->foreignId('user_id')
-          ->constrained('users')
-          ->cascadeOnDelete();
-
-    $table->enum('role_in_team', [
-        'LEADER',
-        'MEMBER'
-    ])->default('MEMBER');
-
-    $table->dateTime('joined_at')->useCurrent();
-
-    $table->unique(['team_id', 'user_id']);
-});
+        $table->primary(['team_id', 'user_id']);
+    });
     }
 
     /**
