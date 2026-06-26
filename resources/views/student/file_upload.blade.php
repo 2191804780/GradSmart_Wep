@@ -3,7 +3,7 @@
 @section('title', 'GradSmart — رفع الملفات')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/file_upload.css') }}">
+<link rel="stylesheet" href="{{ asset('css/student/file_upload.css') }}">
 @endsection
 
 @section('topbar_actions')
