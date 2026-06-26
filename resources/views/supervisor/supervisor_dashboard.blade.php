@@ -4,6 +4,15 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/supervisor/supervisor_dashboard.css') }}">
+<style>
+  .project-item {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .project-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+</style>
 @endsection
 
 @section('content')
@@ -11,22 +20,22 @@
   <div class="stats-grid">
     <div class="stat-card green">
       <div class="stat-icon">👥</div>
-      <div class="stat-num">8</div>
+      <div class="stat-num">{{ $teamsCount }}</div>
       <div class="stat-label">فرق تحت إشرافي</div>
     </div>
     <div class="stat-card blue">
       <div class="stat-icon">✅</div>
-      <div class="stat-num">5</div>
+      <div class="stat-num">{{ $onTrackCount }}</div>
       <div class="stat-label">مشاريع على المسار</div>
     </div>
     <div class="stat-card orange">
       <div class="stat-icon">⚠️</div>
-      <div class="stat-num">2</div>
+      <div class="stat-num">{{ $urgentCount }}</div>
       <div class="stat-label">تحتاج تدخل عاجل</div>
     </div>
     <div class="stat-card red">
       <div class="stat-icon">🔔</div>
-      <div class="stat-num">6</div>
+      <div class="stat-num">{{ $newRequests->count() }}</div>
       <div class="stat-label">طلبات جديدة</div>
     </div>
   </div>
@@ -38,115 +47,83 @@
     <div class="card" style="animation-delay:.3s">
       <div class="card-header">
         <div class="card-title">📂 مشاريع الفرق</div>
-        <a class="card-action" href="#">عرض الكل ←</a>
+        <a class="card-action" href="{{ route('supervisor.projects') }}">عرض الكل ←</a>
       </div>
       <div class="projects-list">
- 
-        <div class="project-item danger">
-          <div class="pi-top">
-            <div class="pi-icon" style="background:#fef2f2">🚨</div>
-            <div>
-              <div class="pi-name">SmartLibrary — نظام مكتبة ذكي</div>
-              <div class="pi-meta">👥 فريق Beta · 4 أعضاء</div>
+        @forelse($teams as $team)
+          @php
+            $project = $team->project;
+            $aiReport = $project ? $project->aiReports()->orderBy('generated_at', 'desc')->first() : null;
+            
+            $riskText = 'منخفض';
+            $riskClass = 'risk-low';
+            $riskBadge = '🟢';
+            $color = 'blue';
+            $bgColor = '#eff6ff';
+
+            if ($aiReport) {
+                if ($aiReport->risk_level === 'HIGH') {
+                    $riskText = 'خطر عالي';
+                    $riskClass = 'risk-high';
+                    $riskBadge = '🔴';
+                    $color = 'red';
+                    $bgColor = '#fef2f2';
+                } elseif ($aiReport->risk_level === 'MEDIUM') {
+                    $riskText = 'متوسط';
+                    $riskClass = 'risk-mid';
+                    $riskBadge = '🟡';
+                    $color = 'orange';
+                    $bgColor = '#fff7ed';
+                }
+            }
+          @endphp
+          
+          @if($project)
+            <div class="project-item {{ $riskClass === 'risk-high' ? 'danger' : '' }}" onclick="window.location='{{ route('supervisor.projects', ['team_id' => $team->id]) }}'" style="cursor: pointer;">
+              <div class="pi-top">
+                <div class="pi-icon" style="background: {{ $bgColor }}">
+                  @if($team->department_id == 1) 🌐
+                  @elseif($team->department_id == 4) 🧠
+                  @elseif($team->department_id == 7) 🛒
+                  @else 📂
+                  @endif
+                </div>
+                <div>
+                  <div class="pi-name">{{ $project->title }}</div>
+                  <div class="pi-meta">👥 فريق {{ $team->name }} · {{ $team->members->count() }} أعضاء</div>
+                </div>
+                <div class="pi-risk {{ $riskClass }}">{{ $riskBadge }} {{ $riskText }}</div>
+              </div>
+              <div class="pi-progress">
+                <div class="pip-top">
+                  <span style="color:var(--muted)">الإنجاز</span>
+                  <span style="color:var(--{{ $color }});font-weight:700">{{ intval($project->progress) }}%</span>
+                </div>
+                <div class="pip-track"><div class="pip-fill" style="width:{{ $project->progress }}%;background:var(--{{ $color }})"></div></div>
+              </div>
+              <div class="pi-footer">
+                <div class="pi-avatars">
+                  @foreach($team->members->take(3) as $member)
+                    @php
+                      $initials = mb_substr($member->name, 0, 2);
+                      $avatarColors = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6'];
+                      $colorIndex = $member->id % count($avatarColors);
+                    @endphp
+                    <div class="pi-av" style="background: {{ $avatarColors[$colorIndex] }}">{{ $initials }}</div>
+                  @endforeach
+                </div>
+                @if($project->expected_end_date && $project->expected_end_date->isPast())
+                  <span style="color: var(--red)">⚠ متأخر</span>
+                @else
+                  <span>✅ على المسار</span>
+                @endif
+                <span>📅 الموعد: {{ $project->expected_end_date ? $project->expected_end_date->format('Y/m/d') : 'غير محدد' }}</span>
+              </div>
             </div>
-            <div class="pi-risk risk-high">🔴 خطر عالي</div>
-          </div>
-          <div class="pi-progress">
-            <div class="pip-top">
-              <span style="color:var(--muted)">الإنجاز</span>
-              <span style="color:var(--red);font-weight:700">22%</span>
-            </div>
-            <div class="pip-track"><div class="pip-fill" style="width:22%;background:var(--red)"></div></div>
-          </div>
-          <div class="pi-footer">
-            <div class="pi-avatars">
-              <div class="pi-av" style="background:var(--red)">ر م</div>
-              <div class="pi-av" style="background:var(--orange)">ه ع</div>
-            </div>
-            <span>⚠ تأخر 5 أيام</span>
-            <span>📅 الموعد: 1 يونيو</span>
-          </div>
-        </div>
- 
-        <div class="project-item">
-          <div class="pi-top">
-            <div class="pi-icon" style="background:#eff6ff">🌐</div>
-            <div>
-              <div class="pi-name">GradSmart — إدارة التخرج</div>
-              <div class="pi-meta">👥 فريق Alpha · 4 أعضاء</div>
-            </div>
-            <div class="pi-risk risk-low">🟢 منخفض</div>
-          </div>
-          <div class="pi-progress">
-            <div class="pip-top">
-              <span style="color:var(--muted)">الإنجاز</span>
-              <span style="color:var(--blue);font-weight:700">62%</span>
-            </div>
-            <div class="pip-track"><div class="pip-fill" style="width:62%;background:var(--blue)"></div></div>
-          </div>
-          <div class="pi-footer">
-            <div class="pi-avatars">
-              <div class="pi-av" style="background:var(--blue)">م أ</div>
-              <div class="pi-av" style="background:var(--pink)">سا</div>
-              <div class="pi-av" style="background:var(--green)">عم</div>
-            </div>
-            <span>✅ على المسار</span>
-            <span>📅 الموعد: 23 يونيو</span>
-          </div>
-        </div>
- 
-        <div class="project-item">
-          <div class="pi-top">
-            <div class="pi-icon" style="background:#fff7ed">🛒</div>
-            <div>
-              <div class="pi-name">E-Commerce Platform</div>
-              <div class="pi-meta">👥 فريق Gamma · 3 أعضاء</div>
-            </div>
-            <div class="pi-risk risk-mid">🟡 متوسط</div>
-          </div>
-          <div class="pi-progress">
-            <div class="pip-top">
-              <span style="color:var(--muted)">الإنجاز</span>
-              <span style="color:var(--orange);font-weight:700">45%</span>
-            </div>
-            <div class="pip-track"><div class="pip-fill" style="width:45%;background:var(--orange)"></div></div>
-          </div>
-          <div class="pi-footer">
-            <div class="pi-avatars">
-              <div class="pi-av" style="background:var(--orange)">خا</div>
-              <div class="pi-av" style="background:var(--yellow)">ند</div>
-            </div>
-            <span>⚡ تأخر بسيط</span>
-            <span>📅 الموعد: 15 يونيو</span>
-          </div>
-        </div>
- 
-        <div class="project-item">
-          <div class="pi-top">
-            <div class="pi-icon" style="background:#f0fdf4">🏥</div>
-            <div>
-              <div class="pi-name">Hospital Management System</div>
-              <div class="pi-meta">👥 فريق Delta · 4 أعضاء</div>
-            </div>
-            <div class="pi-risk risk-low">🟢 منخفض</div>
-          </div>
-          <div class="pi-progress">
-            <div class="pip-top">
-              <span style="color:var(--muted)">الإنجاز</span>
-              <span style="color:var(--green);font-weight:700">78%</span>
-            </div>
-            <div class="pip-track"><div class="pip-fill" style="width:78%;background:var(--green)"></div></div>
-          </div>
-          <div class="pi-footer">
-            <div class="pi-avatars">
-              <div class="pi-av" style="background:var(--green)">أم</div>
-              <div class="pi-av" style="background:var(--teal)">فا</div>
-            </div>
-            <span>✅ ممتاز</span>
-            <span>📅 الموعد: 30 يونيو</span>
-          </div>
-        </div>
- 
+          @endif
+        @empty
+          <p style="text-align:center;padding:40px;color:var(--muted)">لا توجد مشاريع مسندة إليك حالياً.</p>
+        @endforelse
       </div>
     </div>
  
@@ -157,43 +134,55 @@
       <div class="card" style="animation-delay:.35s">
         <div class="card-header">
           <div class="card-title">🤖 تقرير الذكاء الاصطناعي</div>
-          <a class="card-action" href="#">تفاصيل ←</a>
+          <a class="card-action" href="{{ route('supervisor.projects') }}">تفاصيل ←</a>
         </div>
         <div class="ai-card">
           <div class="ai-header-row">
             <div class="ai-icon-box">🧠</div>
             <div>
               <div class="ai-title">تحليل المشاريع</div>
-              <div class="ai-sub">آخر تحديث: منذ ساعة</div>
+              <div class="ai-sub">آخر تحديث: تلقائي لحظي</div>
             </div>
           </div>
           <div class="ai-items">
             <div class="ai-item">
               <span class="ai-item-label">🔴 عالي الخطورة</span>
-              <span class="ai-item-val" style="color:var(--red)">2 مشاريع</span>
+              <span class="ai-item-val" style="color:var(--red)">{{ $teams->filter(fn($t) => $t->project && $t->project->aiReports()->orderBy('generated_at', 'desc')->first()?->risk_level === 'HIGH')->count() }} مشاريع</span>
             </div>
             <div class="ai-item">
               <span class="ai-item-label">🟡 متوسط الخطورة</span>
-              <span class="ai-item-val" style="color:var(--orange)">1 مشروع</span>
+              <span class="ai-item-val" style="color:var(--orange)">{{ $teams->filter(fn($t) => $t->project && $t->project->aiReports()->orderBy('generated_at', 'desc')->first()?->risk_level === 'MEDIUM')->count() }} مشروع</span>
             </div>
             <div class="ai-item">
               <span class="ai-item-label">🟢 منخفض الخطورة</span>
-              <span class="ai-item-val" style="color:var(--green)">5 مشاريع</span>
+              <span class="ai-item-val" style="color:var(--green)">{{ $teams->filter(fn($t) => $t->project && $t->project->aiReports()->orderBy('generated_at', 'desc')->first()?->risk_level === 'LOW')->count() }} مشاريع</span>
             </div>
             <div class="ai-item">
               <span class="ai-item-label">📈 متوسط الإنجاز</span>
-              <span class="ai-item-val" style="color:var(--blue)">58%</span>
+              <span class="ai-item-val" style="color:var(--blue)">
+                @php
+                  $avgProgress = $teams->avg(fn($t) => $t->project?->progress ?? 0);
+                @endphp
+                {{ number_format($avgProgress ?? 0, 1) }}%
+              </span>
             </div>
           </div>
         </div>
         <div style="margin-top:14px">
-          <div style="font-size:.75rem;font-weight:700;margin-bottom:8px">إنجاز الفرق هذا الأسبوع</div>
+          <div style="font-size:.75rem;font-weight:700;margin-bottom:8px">إنجاز الفرق الحقيقي</div>
           <div class="chart-bars">
-            <div class="bar-wrap"><div class="bar" style="height:22%;background:var(--red)"></div><div class="bar-label">Beta</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:62%;background:var(--blue)"></div><div class="bar-label">Alpha</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:45%;background:var(--orange)"></div><div class="bar-label">Gamma</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:78%;background:var(--green)"></div><div class="bar-label">Delta</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:55%;background:var(--purple)"></div><div class="bar-label">Zeta</div></div>
+            @foreach($teams as $team)
+              @if($team->project)
+                @php
+                  $colors = ['#10b981', '#3b82f6', '#f97316', '#8b5cf6', '#ec4899'];
+                  $color = $colors[$team->id % count($colors)];
+                @endphp
+                <div class="bar-wrap">
+                  <div class="bar" style="height:{{ $team->project->progress }}%;background:{{ $color }}"></div>
+                  <div class="bar-label">{{ $team->name }}</div>
+                </div>
+              @endif
+            @endforeach
           </div>
         </div>
       </div>
@@ -205,30 +194,31 @@
           <a class="card-action" href="#">الكل ←</a>
         </div>
         <div class="alerts-list">
-          <div class="alert-item danger">
-            <div class="al-icon">🚨</div>
-            <div>
-              <div class="al-title">فريق Beta متأخر 5 أيام!</div>
-              <div class="al-desc">مشروع SmartLibrary لم يُنجز سوى 22% — تدخل عاجل مطلوب</div>
-              <div class="al-time">منذ ساعة</div>
+          @forelse($alerts as $alert)
+            @php
+              $class = 'info';
+              $icon = '💬';
+              if ($alert->type === 'DANGER') {
+                  $class = 'danger';
+                  $icon = '🚨';
+              } elseif ($alert->type === 'WARNING') {
+                  $class = 'warning';
+                  $icon = '⚠️';
+              } elseif ($alert->type === 'SUCCESS') {
+                  $class = 'info';
+                  $icon = '✅';
+              }
+            @endphp
+            <div class="alert-item {{ $class }}">
+              <div class="al-icon">{{ $icon }}</div>
+              <div>
+                <div class="al-title">{{ $alert->message }}</div>
+                <div class="al-time">{{ $alert->created_at ? $alert->created_at->diffForHumans() : '' }}</div>
+              </div>
             </div>
-          </div>
-          <div class="alert-item warning">
-            <div class="al-icon">⚠️</div>
-            <div>
-              <div class="al-title">فريق Gamma: إنجاز أقل من المتوقع</div>
-              <div class="al-desc">توقع AI بأن المشروع قد يتأخر إذا لم يتسارع العمل</div>
-              <div class="al-time">منذ 3 ساعات</div>
-            </div>
-          </div>
-          <div class="alert-item info">
-            <div class="al-icon">💬</div>
-            <div>
-              <div class="al-title">رسائل جديدة من 4 فرق</div>
-              <div class="al-desc">فريق Alpha، Delta، Zeta، Eta أرسلوا استفسارات</div>
-              <div class="al-time">اليوم</div>
-            </div>
-          </div>
+          @empty
+            <p style="text-align:center;padding:20px;color:var(--muted);font-size:.8rem">لا توجد تنبيهات جديدة.</p>
+          @endforelse
         </div>
       </div>
  
@@ -242,42 +232,32 @@
     <div class="card" style="animation-delay:.45s">
       <div class="card-header">
         <div class="card-title">📨 طلبات إشراف جديدة</div>
-        <span style="background:#fef2f2;color:var(--red);font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px">6 جديد</span>
+        <span style="background:#fef2f2;color:var(--red);font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px">{{ $newRequests->count() }} جديد</span>
       </div>
       <div class="requests-list">
-        <div class="request-item">
-          <div class="req-avatar" style="background:linear-gradient(135deg,var(--blue),var(--purple))">ي م</div>
-          <div>
-            <div class="req-name">يوسف محمد</div>
-            <div class="req-desc">مشروع: تطبيق صحة ذكي · AI</div>
+        @forelse($newRequests as $req)
+          <div class="request-item">
+            <div class="req-avatar" style="background:linear-gradient(135deg,var(--blue),var(--purple))">
+              {{ mb_substr($req->creator->name ?? 'ط', 0, 2) }}
+            </div>
+            <div>
+              <div class="req-name">{{ $req->creator->name ?? 'طالب' }}</div>
+              <div class="req-desc">مشروع: {{ $req->project->title ?? 'لم يحدد' }}</div>
+            </div>
+            <div class="req-actions">
+              <form action="{{ route('supervisor.acceptRequest', ['team' => $req->id]) }}" method="POST" style="display:inline">
+                @csrf
+                <button type="submit" class="req-btn req-accept">✓ قبول</button>
+              </form>
+              <form action="{{ route('supervisor.rejectRequest', ['team' => $req->id]) }}" method="POST" style="display:inline">
+                @csrf
+                <button type="submit" class="req-btn req-reject">✕</button>
+              </form>
+            </div>
           </div>
-          <div class="req-actions">
-            <button class="req-btn req-accept">✓ قبول</button>
-            <button class="req-btn req-reject">✕</button>
-          </div>
-        </div>
-        <div class="request-item">
-          <div class="req-avatar" style="background:linear-gradient(135deg,var(--pink),var(--orange))">ن ا</div>
-          <div>
-            <div class="req-name">نور الدين أحمد</div>
-            <div class="req-desc">مشروع: منصة تعليم إلكتروني</div>
-          </div>
-          <div class="req-actions">
-            <button class="req-btn req-accept">✓ قبول</button>
-            <button class="req-btn req-reject">✕</button>
-          </div>
-        </div>
-        <div class="request-item">
-          <div class="req-avatar" style="background:linear-gradient(135deg,var(--green),var(--teal))">ر ك</div>
-          <div>
-            <div class="req-name">رنا كريم</div>
-            <div class="req-desc">مشروع: نظام حجز مستشفى</div>
-          </div>
-          <div class="req-actions">
-            <button class="req-btn req-accept">✓ قبول</button>
-            <button class="req-btn req-reject">✕</button>
-          </div>
-        </div>
+        @empty
+          <p style="text-align:center;padding:20px;color:var(--muted);font-size:.8rem">لا توجد طلبات إشراف حالياً.</p>
+        @endforelse
       </div>
     </div>
  
@@ -285,25 +265,34 @@
     <div class="card" style="animation-delay:.50s">
       <div class="card-header">
         <div class="card-title">📝 تقييم سريع</div>
-        <a class="card-action" href="#">كل التقييمات ←</a>
+        <a class="card-action" href="{{ route('supervisor.projects') }}">كل التقييمات ←</a>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <select style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;background:#f8fafc">
-          <option>اختر الفريق...</option>
-          <option>فريق Alpha</option>
-          <option>فريق Beta</option>
-          <option>فريق Gamma</option>
-        </select>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">🟢 ممتاز</div>
-          <div style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">🔵 جيد</div>
-          <div style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">🟡 يحتاج تحسين</div>
+      <form action="" id="quick-eval-form" method="POST">
+        @csrf
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <select id="quick-eval-team" onchange="updateQuickEvalAction(this.value)" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;background:#f8fafc" required>
+            <option value="">اختر الفريق...</option>
+            @foreach($teams as $team)
+              <option value="{{ $team->id }}">فريق {{ $team->name }} ({{ $team->project->title ?? '' }})</option>
+            @endforeach
+          </select>
+          <div style="display:flex;gap:8px">
+            <div onclick="setQuickEvalGrade(30, 25, 25)" class="quick-grade-btn" style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s">🟢 ممتاز</div>
+            <div onclick="setQuickEvalGrade(24, 20, 20)" class="quick-grade-btn" style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s">🔵 جيد</div>
+            <div onclick="setQuickEvalGrade(18, 15, 15)" class="quick-grade-btn" style="flex:1;padding:10px;background:var(--bg);border-radius:9px;text-align:center;cursor:pointer;border:1.5px solid var(--border);font-size:.75rem;font-weight:700;transition:all .2s">🟡 تحسين</div>
+          </div>
+          
+          <!-- Hidden Inputs -->
+          <input type="hidden" name="score_documentation" id="quick_doc" value="30">
+          <input type="hidden" name="score_implementation" id="quick_impl" value="25">
+          <input type="hidden" name="score_presentation" id="quick_pres" value="25">
+
+          <textarea name="feedback" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.78rem;resize:none;height:80px;outline:none;direction:rtl;background:#f8fafc" placeholder="اكتب ملاحظاتك للفريق..." required></textarea>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">📤 إرسال التقييم</button>
         </div>
-        <textarea style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.78rem;resize:none;height:80px;outline:none;direction:rtl;background:#f8fafc" placeholder="اكتب ملاحظاتك للفريق..."></textarea>
-        <button class="btn btn-primary" style="width:100%;justify-content:center">📤 إرسال التقييم</button>
-      </div>
+      </form>
     </div>
- 
+
     <!-- Schedule -->
     <div class="card" style="animation-delay:.55s">
       <div class="card-header">
@@ -311,21 +300,27 @@
         <a class="card-action" href="#">إضافة ←</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="padding:12px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #bbf7d0;border-radius:11px">
-          <div style="font-size:.8rem;font-weight:800;margin-bottom:3px">🟢 اليوم — 2:00 م</div>
-          <div style="font-size:.75rem;font-weight:600">فريق Alpha — مراجعة أسبوعية</div>
-          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">Zoom · 30 دقيقة</div>
-        </div>
-        <div style="padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:11px">
-          <div style="font-size:.8rem;font-weight:800;margin-bottom:3px">🔵 غداً — 10:00 ص</div>
-          <div style="font-size:.75rem;font-weight:600">فريق Beta — جلسة إنقاذ عاجلة</div>
-          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">حضوري · ساعة</div>
-        </div>
-        <div style="padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:11px">
-          <div style="font-size:.8rem;font-weight:800;margin-bottom:3px">🟡 الخميس — 4:00 م</div>
-          <div style="font-size:.75rem;font-weight:600">فريق Delta — عرض التقدم</div>
-          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">Zoom · 45 دقيقة</div>
-        </div>
+        @foreach($meetings as $meeting)
+          @php
+            $bg = '#f8fafc';
+            $border = 'var(--border)';
+            if($meeting['color'] === 'green') {
+                $bg = 'linear-gradient(135deg,#f0fdf4,#ecfdf5)';
+                $border = '#bbf7d0';
+            } elseif($meeting['color'] === 'blue') {
+                $bg = 'linear-gradient(135deg,#eff6ff,#f0fdf4)';
+                $border = '#bfdbfe';
+            }
+          @endphp
+          <div style="padding:12px;background:{{ $bg }};border:1px solid {{ $border }};border-radius:11px">
+            <div style="font-size:.8rem;font-weight:800;margin-bottom:3px">
+              @if($meeting['color'] === 'green') 🟢 @elseif($meeting['color'] === 'blue') 🔵 @else 🟡 @endif
+              {{ $meeting['day'] }} — {{ $meeting['time'] }}
+            </div>
+            <div style="font-size:.75rem;font-weight:600">{{ $meeting['team'] }} — {{ $meeting['title'] }}</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:3px">{{ $meeting['type'] }}</div>
+          </div>
+        @endforeach
       </div>
     </div>
  
@@ -337,5 +332,26 @@
     // تفعيل كلاس active للرابط الحالي في السايدبار تلقائياً
     const navDashboard = document.getElementById('nav-dashboard');
     if (navDashboard) navDashboard.classList.add('active');
+
+    function updateQuickEvalAction(teamId) {
+        const form = document.getElementById('quick-eval-form');
+        if(teamId) {
+            form.action = `/supervisor/projects/${teamId}/evaluation`;
+        } else {
+            form.action = '';
+        }
+    }
+
+    function setQuickEvalGrade(doc, impl, pres) {
+        document.getElementById('quick_doc').value = doc;
+        document.getElementById('quick_impl').value = impl;
+        document.getElementById('quick_pres').value = pres;
+        
+        // Highlight active button
+        const buttons = document.querySelectorAll('.quick-grade-btn');
+        buttons.forEach(b => b.style.borderColor = 'var(--border)');
+        
+        event.currentTarget.style.borderColor = 'var(--primary)';
+    }
 </script>
 @endsection
