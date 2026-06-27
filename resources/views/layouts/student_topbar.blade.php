@@ -3,8 +3,13 @@
     @hasSection('page_title')
       @yield('page_title')
     @else
-      <h1>مرحباً، محمد 👋</h1>
-      <p>السبت، 9 مايو 2026 — إليك ملخص مشروعك اليوم</p>
+      <h1>مرحباً {{ substr(auth()->user()->name, 0, 9) }}👋</h1>
+     
+     @php
+     \Carbon\Carbon::setLocale('ar');
+     
+     @endphp 
+      <p>{{ now()->format('l، j F Y') }} — إليك ملخص مشروعك </p>
     @endif
   </div>
   <div class="topbar-actions">

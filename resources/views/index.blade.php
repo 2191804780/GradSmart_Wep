@@ -65,7 +65,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   display: flex;
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
   transition: background 0.4s ease, color 0.4s ease;
 }
@@ -404,6 +404,7 @@ body::after {
 @media (max-width: 600px) {
   .features { grid-template-columns: 1fr; }
 }
+
 </style>
 </head>
 
@@ -446,72 +447,119 @@ body::after {
 <div class="right-panel">
   <div class="auth-card">
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
-      <button class="tab-btn" onclick="switchTab('register')">حساب جديد</button>
+       <button type="button" class="tab-btn {{ session('active_tab') === 'register' ? '' : 'active' }}" onclick="switchTab('login')">تسجيل الدخول</button>
+       <button type="button" class="tab-btn {{ session('active_tab') === 'register' ? 'active' : '' }}" onclick="switchTab('register')">حساب جديد</button>
     </div>
 
-    <div class="form-section active" id="login">
-      <div class="form-title">أهلاً بعودتك 👋</div>
-      <div class="form-subtitle">سجّل دخولك للوصول إلى مشاريعك</div>
-      <div class="form-group">
-        <label class="form-label">البريد الالكتروني</label>
-        <div class="input-wrapper">
-          <span class="input-icon">✉️</span>
-          <input type="email" class="form-input" placeholder="example@university.edu">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">كلمة المرور</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🔒</span>
-          <input type="password" class="form-input" placeholder="••••••••">
-        </div>
-      </div>
-      <button class="btn-primary">تسجيل الدخول ←</button>
-      <a href="forgot_password.html" class="forgot-link">نسيت كلمة المرور؟</a>
+    <div class="form-section {{ session('active_tab') === 'register' ? '' : 'active' }}" id="login"> 
+        <form method="POST" action="{{ route('login.post') }}">
+            @csrf
+
+            <div class="form-title">أهلاً بعودتك 👋</div>
+            <div class="form-subtitle">سجّل دخولك للوصول إلى مشاريعك</div>
+
+            <div class="form-group">
+                <label class="form-label">البريد الالكتروني</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" name="email" class="form-input" placeholder="example@university.edu" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">كلمة المرور</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">تسجيل الدخول ←</button>
+            <a href="{{ route('password.request') }}" class="forgot-link">نسيت كلمة المرور؟</a>
+        </form>
     </div>
 
-    <div class="form-section" id="register">
-      <div class="form-title">إنشاء حساب جديد ✨</div>
-      <div class="form-subtitle">انضم إلى منصة GradSmart اليوم</div>
-      <div class="form-group">
-        <label class="form-label">نوع الحساب</label>
-        <div class="role-selector">
-          <div class="role-option selected" onclick="selectRole(this)">
-            <div class="role-icon">👨‍🎓</div><span class="role-label">طالب</span>
-          </div>
-          <div class="role-option" onclick="selectRole(this)">
-            <div class="role-icon">👨‍🏫</div><span class="role-label">مشرف</span>
-          </div>
-          <div class="role-option" onclick="selectRole(this)">
-            <div class="role-icon">🏛️</div><span class="role-label">إدارة</span>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">الاسم الكامل</label>
-        <div class="input-wrapper">
-          <span class="input-icon">👤</span>
-          <input type="text" class="form-input" placeholder="محمد أحمد علي">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">البريد الالكتروني</label>
-        <div class="input-wrapper">
-          <span class="input-icon">✉️</span>
-          <input type="email" class="form-input" placeholder="example@university.edu">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">كلمة المرور</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🔒</span>
-          <input type="password" class="form-input" placeholder="••••••••">
-        </div>
-      </div>
-      <button class="btn-primary">إنشاء الحساب ←</button>
-    </div>
+    <div class="form-section {{ session('active_tab') === 'register' ? 'active' : '' }}" id="register">
+        <form method="POST" action="{{ route('register.post') }}">
+            @csrf
+            <input type="hidden" name="role_name" id="role_name" value="STUDENT"> <!-- القيمة الافتراضية لدور الطالب -->
+            <div class="form-title">إنشاء حساب جديد ✨</div>
+            <div class="form-subtitle">انضم إلى منصة GradSmart اليوم</div>
+            <div class="form-group">
+              @if ($errors->any())
+          <div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:12px;margin-bottom:15px;text-align:center;font-weight:700;">
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
+           </div>
+          @endif
+    <label class="form-label">نوع الحساب</label>
 
+    <div class="role-selector">
+        <div class="role-option selected" onclick="selectRole(this, 'STUDENT')">
+            <div class="role-icon">👨‍🎓</div>
+            <span class="role-label">طالب</span>
+            </div>
+
+        <div class="role-option" onclick="selectRole(this, 'SUPERVISOR')">
+            <div class="role-icon">👨‍🏫</div>
+            <span class="role-label">مشرف</span>
+           </div>
+            </div>
+            </div>
+            <div class="form-group"  id="studentIdGroup" >
+                <label class="form-label">رقم قيد الطالب</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🎓</span>
+                    <input type="text" id="student_id" name="student_id" class="form-input" placeholder="مثال: 20201234">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">الاسم الكامل</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input type="text" name="name" class="form-input" placeholder="محمد أحمد علي" required>
+                </div>
+            </div>
+            <div class="form-group">
+            <label class="form-label">القسم</label>
+             <div class="input-wrapper">
+              <span class="input-icon">🏛️</span>
+             <select name="department_id"
+                class="form-input"
+                required>
+
+               <option value=""> اختر القسم</option>
+
+                 @foreach($departments as $department)
+                <option value="{{ $department->id }}">
+                    {{ $department->name }}
+                 </option>
+                   @endforeach
+
+               </select>
+             </div>
+           </div>
+            <div class="form-group">
+                <label class="form-label">البريد الالكتروني</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" name="email" class="form-input" placeholder="example@university.edu" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">كلمة المرور</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">إنشاء الحساب ←</button>
+        </form>
+    </div>
     <div class="security-badges">
       <div class="badge">🔐 اتصال آمن</div>
       <div class="badge">🎓 للجامعات فقط</div>
@@ -529,10 +577,26 @@ function switchTab(tab) {
 }
 
 // نظام اختيار دور المستخدم (User Role Selection)
-function selectRole(el) {
-  document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
-  el.classList.add('selected');
+
+function selectRole(el, role) {
+    document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+
+    document.getElementById('role_name').value = role;
+
+    const studentIdGroup = document.getElementById('studentIdGroup');
+    const studentIdInput = document.getElementById('student_id');
+
+    if (role === 'STUDENT') {
+        studentIdGroup.style.display = 'block';
+        studentIdInput.required = true;
+    } else {
+        studentIdGroup.style.display = 'none';
+        studentIdInput.required = false;
+        studentIdInput.value = '';
+    }
 }
+
 
 // نظام تبديل المظهر وحفظ تفضيل المستخدم في المتصفح (Dark/Light Theme Controller)
 const themeToggle = document.getElementById('themeToggle');

@@ -1,7 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\FileController;
+use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\MessageController;
+use App\Models\Department;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,39 +22,30 @@ use Illuminate\Support\Facades\Route;
 */
 
 // --- General & Auth Routes ---
+
+
 Route::get('/', function () {
-    return view('index');
+    $departments = Department::all();
+    return view('index', compact('departments'));
 })->name('home');
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/forgot-password', function () {
     return view('auth.forgot_password');
-})->name('password.request');
-
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
-
-Route::get('/srs', function () {
-    return view('srs');
-});
-
-Route::get('/logo', function () {
-    return view('logo2');
-});
-
-Route::get('/gs-logo', function () {
-    return view('GradSmartLogo');
-});
-
+    })->name('password.request');
+    
 // --- Student Routes ---
 Route::prefix('student')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('student.student_dashboard');
-    });
+    Route::get('/dashboard', [StudentDashboardController::class, 'index'])
+    ->name('student.dashboard');
 
     Route::get('/dashboard-php', function () {
         return view('student.student_dashboard_php');
@@ -55,22 +54,37 @@ Route::prefix('student')->group(function () {
     Route::get('/chat', function () {
         return view('student.student_chat');
     });
+    
+    Route::get('/project', [ProjectController::class, 'index'])->name('student.project.index');
+    Route::post('/project', [ProjectController::class, 'store'])->name('student.project.store');
 
-    Route::get('/chat-php', function () {
-        return view('student.student_chat_php');
-    });
+    Route::get('/chat', [MessageController::class, 'index'])
+    ->name('student.chat.index');
 
-    Route::get('/file-upload', function () {
-        return view('student.file_upload');
-    });
+    Route::post('/chat/send', [MessageController::class, 'store'])
+    ->name('student.chat.send');
+    
+    Route::get('/file-upload', [FileController::class, 'index'])
+    ->name('student.files.index');
+
+    Route::post('/file-upload', [FileController::class, 'store'])
+    ->name('student.files.store');
+
+    Route::get('/file-upload/download/{file}', [FileController::class, 'download'])
+    ->name('student.files.download');
+
+    Route::delete('/file-upload/delete/{file}', [FileController::class, 'destroy'])
+    ->name('student.files.destroy');
+
+    Route::get('/files-upload/{file}/preview', [FileController::class, 'preview'])
+    ->name('student.files.preview');
 
     Route::get('/sup-profile', function () {
         return view('student.sup_profile');
     });
 
-    Route::get('/progress', function () {
-        return view('student.student_progress');
-    });
+    Route::get('/progress', [ProgressController::class, 'index'])
+    ->name('student.progress.index');
 
     Route::get('/team-management', function () {
         return view('student.team_management');
@@ -80,17 +94,41 @@ Route::prefix('student')->group(function () {
         return view('student.task_detail');
     });
 
-    Route::get('/task-management', function () {
-        return view('student.task_management');
-    });
+    Route::get('/task-management', [TaskController::class, 'index'])
+    ->name('student.tasks.index');
 
-    Route::get('/create-team', function () {
-        return view('student.creat_team');
-    });
+     Route::post('/task-management', [TaskController::class, 'store'])
+    ->name('student.tasks.store');
+
+
+    Route::get('/create-team', [TeamController::class, 'create'])->name('student.teams.create');
+    Route::post('/create-team', [TeamController::class, 'store'])->name('student.teams.store');
 
     Route::get('/sup-projects', function () {
         return view('student.sup_projects');
     });
+    
+   Route::get('/team-management', [TeamController::class, 'management'])
+    ->name('student.teams.management');
+
+Route::post('/team-management/invite', [TeamController::class, 'inviteMember'])
+    ->name('student.teams.invite');
+
+Route::post('/team-management/make-leader/{member}', [TeamController::class, 'makeLeader'])
+    ->name('student.teams.makeLeader');
+
+Route::delete('/team-management/remove-member/{member}', [TeamController::class, 'removeMember'])
+    ->name('student.teams.removeMember');
+
+Route::post('/team-invitations/{invitation}/accept', [TeamController::class, 'acceptInvitation'])
+    ->name('student.teams.acceptInvitation');
+
+Route::post('/team-invitations/{invitation}/reject', [TeamController::class, 'rejectInvitation'])
+    ->name('student.teams.rejectInvitation');
+    
+    Route::post('/project/request-supervisor/{supervisor}', [ProjectController::class, 'requestSupervisor'])
+    ->name('student.project.requestSupervisor');
+
 });
 
 // --- Supervisor Routes ---

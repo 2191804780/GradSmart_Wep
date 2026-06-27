@@ -1,3 +1,104 @@
+@if($state === 'no_team')
+
+<div class="card" style="text-align:center;padding:50px 25px">
+    <div style="font-size:60px;margin-bottom:15px">👥</div>
+    <h2>لا يمكن عرض التقدم بعد</h2>
+    <p style="color:var(--muted);line-height:1.9;max-width:650px;margin:auto">
+        يجب أن تكوني ضمن فريق أولاً حتى يتمكن النظام من حساب تقدم المشروع والمهام والمراحل.
+    </p>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a href="{{ route('student.teams.create') }}" class="msg-btn" style="text-decoration:none;max-width:220px">
+            🚀 إنشاء فريق
+        </a>
+
+        <a href="{{ route('student.teams.create') }}#my-invitations" class="msg-btn" style="text-decoration:none;max-width:220px;background:#fff;color:var(--blue);border:1px solid var(--blue)">
+            📨 عرض الدعوات
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid" style="margin-top:20px">
+    <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num">1</div>
+        <div class="stat-label">الخطوة الأولى</div>
+        <div class="stat-change up">إنشاء فريق</div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon">📋</div>
+        <div class="stat-num">2</div>
+        <div class="stat-label">الخطوة الثانية</div>
+        <div class="stat-change up">إنشاء مشروع</div>
+    </div>
+
+    <div class="stat-card orange">
+        <div class="stat-icon">✅</div>
+        <div class="stat-num">3</div>
+        <div class="stat-label">الخطوة الثالثة</div>
+        <div class="stat-change warn">إضافة المهام</div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon">📊</div>
+        <div class="stat-num">4</div>
+        <div class="stat-label">الخطوة الرابعة</div>
+        <div class="stat-change up">متابعة التقدم</div>
+    </div>
+</div>
+
+@elseif($state === 'no_project')
+
+<div class="card" style="text-align:center;padding:50px 25px">
+    <div style="font-size:60px;margin-bottom:15px">📋</div>
+    <h2>الفريق جاهز، لكن لا يوجد مشروع بعد</h2>
+    <p style="color:var(--muted);line-height:1.9;max-width:650px;margin:auto">
+        لا يمكن حساب نسبة التقدم قبل إنشاء مشروع وربط المهام به.
+    </p>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a href="{{ route('student.project.index') }}" class="msg-btn" style="text-decoration:none;max-width:220px">
+            📋 إنشاء مشروع
+        </a>
+
+        <a href="{{ route('student.teams.management') }}" class="msg-btn" style="text-decoration:none;max-width:220px;background:#fff;color:var(--blue);border:1px solid var(--blue)">
+            👥 إدارة الفريق
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid" style="margin-top:20px">
+    <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num">{{ $team->members->count() }}</div>
+        <div class="stat-label">أعضاء الفريق</div>
+        <div class="stat-change up">{{ $team->name }}</div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon">🏫</div>
+        <div class="stat-num">✓</div>
+        <div class="stat-label">القسم</div>
+        <div class="stat-change up">{{ $team->department->name ?? 'غير محدد' }}</div>
+    </div>
+
+    <div class="stat-card orange">
+        <div class="stat-icon">📋</div>
+        <div class="stat-num">0</div>
+        <div class="stat-label">المشروع</div>
+        <div class="stat-change warn">لم يتم إنشاؤه بعد</div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon">📊</div>
+        <div class="stat-num">0%</div>
+        <div class="stat-label">التقدم</div>
+        <div class="stat-change up">يبدأ بعد إنشاء المهام</div>
+    </div>
+</div>
+
+@else
 @extends('layouts.student')
 
 @section('title', 'GradSmart — مشاريع المشرف')
@@ -238,3 +339,4 @@ document.querySelectorAll('.ftab').forEach(btn => {
 });
 </script>
 @endsection
+@endif

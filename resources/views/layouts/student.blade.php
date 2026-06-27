@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'GradSmart — بوابة الطالب')</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/student/student_dashboard.css') }}">
     
     <script>
         // منع وميض المظهر عند التحميل
@@ -31,6 +32,7 @@
         @endunless
 
         @yield('content')
+        
     </div>
 
     <!-- Global Theme Toggle Script -->

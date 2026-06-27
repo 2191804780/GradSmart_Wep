@@ -8,196 +8,235 @@
 
 @section('page_title')
 <h1>💬 المحادثة</h1>
-<p>GradSmart — تواصل مع فريقك ومشرفك</p>
+
 @endsection
 
 @section('content')
-  <div class="chat-layout">
- 
+
+@if($state === 'no_team')
+
+<div class="card" style="text-align:center;padding:50px 25px">
+    <div style="font-size:60px;margin-bottom:15px">💬</div>
+    <h2>لا يمكن استخدام المحادثة بعد</h2>
+    <p style="color:var(--muted);line-height:1.9;max-width:650px;margin:auto">
+        يجب أن تكوني ضمن فريق أولاً حتى تتمكني من مراسلة أعضاء الفريق.
+    </p>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a href="{{ route('student.teams.create') }}" class="btn btn-primary">🚀 إنشاء فريق</a>
+        <a href="{{ route('student.teams.create') }}#my-invitations" class="btn btn-outline">📨 عرض الدعوات</a>
+    </div>
+</div>
+
+@else
+
+<div class="chat-layout">
+
     <!-- Conversations -->
     <div class="conv-list">
-      <div class="conv-header">
-        <h2>💬 الرسائل</h2>
-        <div class="conv-search">
-          <span>🔍</span>
-          <input placeholder="ابحث في المحادثات...">
+        <div class="conv-header">
+            <h2>💬 الرسائل</h2>
+
+            <div class="conv-search">
+                <span>🔍</span>
+                <input id="chatSearch" placeholder="ابحث في المحادثات...">
+            </div>
+
+            <div class="conv-tabs">
+                <button class="ctab active" type="button">الفريق</button>
+            </div>
         </div>
-        <div class="conv-tabs">
-          <button class="ctab active">الكل</button>
-          <button class="ctab">المشرفون</button>
-          <button class="ctab">الفريق</button>
+
+        <div class="conv-items" id="contactsList">
+
+            @forelse($contacts as $contact)
+                @php
+                    $initials = collect(explode(' ', trim($contact->name)))
+                        ->filter()
+                        ->take(2)
+                        ->map(fn($p) => mb_substr($p, 0, 1))
+                        ->implode('');
+
+                    $lastMessage = \App\Models\Message::where(function($q) use ($contact) {
+                            $q->where('sender_id', auth()->id())
+                              ->where('receiver_id', $contact->id);
+                        })
+                        ->orWhere(function($q) use ($contact) {
+                            $q->where('sender_id', $contact->id)
+                              ->where('receiver_id', auth()->id());
+                        })
+                        ->orderByDesc('sent_at')
+                        ->first();
+
+                    $unread = \App\Models\Message::where('sender_id', $contact->id)
+                        ->where('receiver_id', auth()->id())
+                        ->where('is_read', 0)
+                        ->count();
+                @endphp
+
+                <a href="{{ route('student.chat.index', ['receiver_id' => $contact->id]) }}"
+                   class="conv-item {{ $selectedContact && $selectedContact->id == $contact->id ? 'active' : '' }}"
+                   style="text-decoration:none"
+                   data-name="{{ strtolower($contact->name) }}">
+
+                    <div class="ci-avatar" style="background:linear-gradient(135deg,var(--blue),var(--purple))">
+                        {{ $initials ?: 'ع' }}
+                        <div class="online-dot"></div>
+                    </div>
+
+                    <div class="ci-info">
+                        <div class="ci-name">{{ $contact->name }} — الفريق</div>
+                        <div class="ci-preview">
+                            {{ $lastMessage->content ?? 'لا توجد رسائل بعد' }}
+                        </div>
+                    </div>
+
+                    <div class="ci-meta">
+                        <div class="ci-time">
+                            {{ $lastMessage?->sent_at ? \Carbon\Carbon::parse($lastMessage->sent_at)->format('H:i') : '' }}
+                        </div>
+
+                        @if($unread > 0)
+                            <div class="ci-unread">{{ $unread }}</div>
+                        @endif
+                    </div>
+                </a>
+            @empty
+                <div style="padding:25px;text-align:center;color:var(--muted)">
+                    لا يوجد أعضاء آخرون في الفريق.
+                </div>
+            @endforelse
+
         </div>
-      </div>
-      <div class="conv-items">
- 
-        <div class="conv-item active">
-          <div class="ci-avatar" style="background:linear-gradient(135deg,var(--green),var(--teal))">
-            أح
-            <div class="online-dot"></div>
-          </div>
-          <div class="ci-info">
-            <div class="ci-name">د. أحمد السالم</div>
-            <div class="ci-preview">أداء ممتاز في الجزء الخلفي...</div>
-          </div>
-          <div class="ci-meta">
-            <div class="ci-time">6:30 م</div>
-          </div>
-        </div>
- 
-        <div class="conv-item">
-          <div class="ci-avatar" style="background:linear-gradient(135deg,var(--pink),var(--orange))">
-            سا
-          </div>
-          <div class="ci-info">
-            <div class="ci-name">سارة علي — الفريق</div>
-            <div class="ci-preview">هل راجعت التصميم الجديد؟</div>
-          </div>
-          <div class="ci-meta">
-            <div class="ci-time">3:15 م</div>
-            <div class="ci-unread">2</div>
-          </div>
-        </div>
- 
-        <div class="conv-item">
-          <div class="ci-avatar" style="background:linear-gradient(135deg,var(--blue),var(--purple))">
-            عم
-            <div class="online-dot"></div>
-          </div>
-          <div class="ci-info">
-            <div class="ci-name">عمر خالد — الفريق</div>
-            <div class="ci-preview">انتهيت من الـ API اليوم</div>
-          </div>
-          <div class="ci-meta">
-            <div class="ci-time">1:00 م</div>
-          </div>
-        </div>
- 
-        <div class="conv-item">
-          <div class="ci-avatar" style="background:linear-gradient(135deg,var(--yellow),var(--orange))">
-            لي
-          </div>
-          <div class="ci-info">
-            <div class="ci-name">ليلى يوسف — الفريق</div>
-            <div class="ci-preview">جداول قاعدة البيانات جاهزة</div>
-          </div>
-          <div class="ci-meta">
-            <div class="ci-time">أمس</div>
-          </div>
-        </div>
- 
-      </div>
     </div>
- 
+
     <!-- Chat Window -->
     <div class="chat-window">
- 
-      <!-- Topbar -->
-      <div class="chat-topbar">
-        <div class="ct-avatar">
-          أح
-          <div class="online-dot"></div>
-        </div>
-        <div>
-          <div class="ct-name">د. أحمد السالم</div>
-          <div class="ct-status">🟢 متاح الآن</div>
-        </div>
-        <div class="ct-actions">
-          <div class="ct-btn">📞</div>
-          <div class="ct-btn">📹</div>
-          <div class="ct-btn">📎</div>
-          <div class="ct-btn">⋮</div>
-        </div>
-      </div>
- 
-      <!-- Messages -->
-      <div class="messages-area">
- 
-        <div class="date-divider">أمس</div>
- 
-        <div class="msg-group me">
-          <div class="msg-sender">د. أحمد السالم</div>
-          <div class="msg-bubble">
-            مرحباً محمد، كيف يسير العمل في المشروع هذا الأسبوع؟
-          </div>
-          <div class="msg-time">أمس 2:00 م</div>
-        </div>
- 
-        <div class="msg-group other">
-          <div class="msg-bubble">
-            السلام عليكم دكتور! العمل يسير بشكل جيد. أنهينا تصميم قاعدة البيانات وبدأنا في واجهات المستخدم 🎉
-          </div>
-          <div class="msg-time">أمس 2:10 م</div>
-        </div>
- 
-        <div class="msg-group me">
-          <div class="msg-bubble">
-            ممتاز! هل يمكنك إرسال تقرير التقدم المرحلي؟
-          </div>
-          <div class="msg-time">أمس 2:15 م</div>
-        </div>
- 
-        <div class="msg-group other">
-          <div style="display:flex;justify-content:flex-end">
-            <div class="file-bubble">
-              <div class="file-icon">📄</div>
-              <div>
-                <div class="file-name">تقرير_المرحلة_الثانية.pdf</div>
-                <div class="file-size">2.4 MB · PDF</div>
-              </div>
+
+        @if($selectedContact)
+
+            @php
+                $selectedInitials = collect(explode(' ', trim($selectedContact->name)))
+                    ->filter()
+                    ->take(2)
+                    ->map(fn($p) => mb_substr($p, 0, 1))
+                    ->implode('');
+            @endphp
+
+            <!-- Topbar -->
+            <div class="chat-topbar">
+                <div class="ct-avatar">
+                    {{ $selectedInitials ?: 'ع' }}
+                    <div class="online-dot"></div>
+                </div>
+
+                <div>
+                    <div class="ct-name">{{ $selectedContact->name }}</div>
+                    <div class="ct-status">🟢 عضو في الفريق</div>
+                </div>
+
+                <div class="ct-actions">
+                    <div class="ct-btn">📞</div>
+                    <div class="ct-btn">📹</div>
+                    <div class="ct-btn">📎</div>
+                    <div class="ct-btn">⋮</div>
+                </div>
             </div>
-          </div>
-          <div class="msg-time">أمس 2:20 م</div>
-        </div>
- 
-        <div class="date-divider">اليوم</div>
- 
-        <div class="msg-group me">
-          <div class="msg-sender">د. أحمد السالم</div>
-          <div class="msg-bubble">
-            أداء ممتاز في الجزء الخلفي. أرجو التركيز على واجهة المستخدم وتحسين تجربة الطالب قبل الموعد النهائي. كذلك أنصح بإضافة صفحة الأخطاء 404.
-          </div>
-          <div class="msg-time">6:30 م</div>
-        </div>
- 
-        <div class="msg-group other">
-          <div class="msg-bubble">
-            شكراً دكتور! سنعمل على واجهة المستخدم خلال هذا الأسبوع وسنضيف صفحة 404 كما اقترحتم 👍
-          </div>
-          <div class="msg-time">6:45 م</div>
-        </div>
- 
-        <!-- Typing -->
-        <div class="msg-group me">
-          <div class="msg-sender">د. أحمد يكتب...</div>
-          <div class="typing">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
-        </div>
- 
-      </div>
- 
-      <!-- Input -->
-      <div class="chat-input-area">
-        <div class="input-row">
-          <div class="input-actions">
-            <button class="ia-btn">😊</button>
-            <button class="ia-btn">📎</button>
-          </div>
-          <textarea class="chat-input" placeholder="اكتب رسالتك..." rows="1"></textarea>
-          <button class="send-btn">➤</button>
-        </div>
-      </div>
- 
+
+            <!-- Messages -->
+            <div class="messages-area" id="messagesArea">
+
+                @forelse($messages as $message)
+
+                    @php
+                        $isMe = $message->sender_id == auth()->id();
+                    @endphp
+
+                    <div class="msg-group {{ $isMe ? 'other' : 'me' }}">
+                        @if(! $isMe)
+                            <div class="msg-sender">{{ $message->sender->name }}</div>
+                        @endif
+
+                        <div class="msg-bubble">
+                            {{ $message->content }}
+                        </div>
+
+                        <div class="msg-time">
+                            {{ \Carbon\Carbon::parse($message->sent_at)->format('Y-m-d H:i') }}
+                        </div>
+                    </div>
+
+                @empty
+                    <div style="text-align:center;color:var(--muted);padding:60px 20px">
+                        <div style="font-size:50px;margin-bottom:12px">💬</div>
+                        <h3>لا توجد رسائل بعد</h3>
+                        <p>ابدئي المحادثة مع {{ $selectedContact->name }}</p>
+                    </div>
+                @endforelse
+
+            </div>
+
+            <!-- Input -->
+            <div class="chat-input-area">
+                <form method="POST" action="{{ route('student.chat.send') }}" class="input-row">
+                    @csrf
+
+                    <input type="hidden" name="receiver_id" value="{{ $selectedContact->id }}">
+
+                    <div class="input-actions">
+                        <button class="ia-btn" type="button">😊</button>
+                        <button class="ia-btn" type="button">📎</button>
+                    </div>
+
+                    <textarea class="chat-input"
+                              name="content"
+                              placeholder="اكتب رسالتك..."
+                              rows="1"
+                              required></textarea>
+
+                    <button class="send-btn" type="submit">➤</button>
+                </form>
+            </div>
+
+        @else
+
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--muted)">
+                <div>
+                    <div style="font-size:60px;margin-bottom:12px">👥</div>
+                    <h3>لا يوجد عضو للمحادثة</h3>
+                    <p>أضيفي أعضاء للفريق حتى تبدأ المحادثة.</p>
+                </div>
+            </div>
+
+        @endif
+
     </div>
-  </div>
+</div>
+
+@endif
+
 @endsection
 
 @section('scripts')
 <script>
-    // تفعيل كلاس active للرابط الحالي في السايدبار تلقائياً
-    const navChat = document.getElementById('nav-chat');
-    if (navChat) navChat.classList.add('active');
+const navChat = document.getElementById('nav-chat');
+if (navChat) navChat.classList.add('active');
+
+const search = document.getElementById('chatSearch');
+
+if (search) {
+    search.addEventListener('keyup', function () {
+        const value = this.value.toLowerCase();
+
+        document.querySelectorAll('.conv-item').forEach(item => {
+            item.style.display = item.dataset.name.includes(value) ? '' : 'none';
+        });
+    });
+}
+
+const messagesArea = document.getElementById('messagesArea');
+if (messagesArea) {
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
 </script>
 @endsection

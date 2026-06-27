@@ -6,471 +6,234 @@
 <link rel="stylesheet" href="{{ asset('css/student/task_management.css') }}">
 @endsection
 
+@php
+    $totalTasks = $tasks->count();
+    $todoTasks = $tasks->where('status', 'TODO');
+    $progressTasks = $tasks->where('status', 'IN_PROGRESS');
+    $doneTasks = $tasks->where('status', 'DONE');
+
+    $lateTasks = $tasks->filter(function ($task) {
+        return $task->status !== 'DONE'
+            && $task->deadline
+            && \Carbon\Carbon::parse($task->deadline)->isPast();
+    });
+@endphp
+
 @section('page_title')
 <h1>✅ إدارة المهام</h1>
-<p>12 مهمة إجمالاً — 7 منجزة، 3 متأخرة تحتاج متابعة</p>
+<p>{{ $totalTasks }} مهمة إجمالاً — {{ $doneTasks->count() }} منجزة، {{ $lateTasks->count() }} متأخرة تحتاج متابعة</p>
 @endsection
 
 @section('topbar_actions')
-<button class="btn btn-outline">📥 تصدير</button>
-<button class="btn btn-primary" onclick="openModal()">＋ مهمة جديدة</button>
+<button class="btn btn-outline" onclick="exportTasks()">📥 تصدير</button>
+<button type="button" class="btn btn-primary" onclick="openModal()">＋ مهمة جديدة</button>
 @endsection
 
 @section('content')
-  <!-- Mini Stats -->
-  <div class="mini-stats-row">
-    <div class="mini-stat-card">
-      <div class="ms-icon" style="background:#f1f5f9">📋</div>
-      <div><div class="ms-num" style="color:var(--muted)">12</div><div class="ms-label">الكل</div></div>
+
+@if ($errors->any())
+    <div style="background:#fee2e2;color:#991b1b;border-radius:16px;padding:14px;margin-bottom:16px;font-weight:700">
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
     </div>
-    <div class="mini-stat-card">
-      <div class="ms-icon" style="background:#f0fdf4">✅</div>
-      <div><div class="ms-num" style="color:var(--green)">7</div><div class="ms-label">منجزة</div></div>
+@endif
+
+@if (session('success'))
+    <div style="background:#dcfce7;color:#166534;border-radius:16px;padding:14px;margin-bottom:16px;font-weight:700">
+        {{ session('success') }}
     </div>
+@endif
+
+<div class="mini-stats-row">
     <div class="mini-stat-card">
-      <div class="ms-icon" style="background:#eff6ff">🔄</div>
-      <div><div class="ms-num" style="color:var(--blue)">2</div><div class="ms-label">قيد التنفيذ</div></div>
+        <div class="ms-icon" style="background:#f1f5f9">📋</div>
+        <div><div class="ms-num" style="color:var(--muted)">{{ $totalTasks }}</div><div class="ms-label">الكل</div></div>
     </div>
+
     <div class="mini-stat-card">
-      <div class="ms-icon" style="background:#fff7ed">⚠️</div>
-      <div><div class="ms-num" style="color:var(--orange)">3</div><div class="ms-label">متأخرة</div></div>
+        <div class="ms-icon" style="background:#f0fdf4">✅</div>
+        <div><div class="ms-num" style="color:var(--green)">{{ $doneTasks->count() }}</div><div class="ms-label">منجزة</div></div>
     </div>
+
     <div class="mini-stat-card">
-      <div class="ms-icon" style="background:#faf5ff">👁️</div>
-      <div><div class="ms-num" style="color:var(--purple)">0</div><div class="ms-label">قيد المراجعة</div></div>
+        <div class="ms-icon" style="background:#eff6ff">🔄</div>
+        <div><div class="ms-num" style="color:var(--blue)">{{ $progressTasks->count() }}</div><div class="ms-label">قيد التنفيذ</div></div>
     </div>
-  </div>
- 
-  <!-- Filter Bar -->
-  <div class="filter-bar">
+
+    <div class="mini-stat-card">
+        <div class="ms-icon" style="background:#fff7ed">⚠️</div>
+        <div><div class="ms-num" style="color:var(--orange)">{{ $lateTasks->count() }}</div><div class="ms-label">متأخرة</div></div>
+    </div>
+
+    <div class="mini-stat-card">
+        <div class="ms-icon" style="background:#faf5ff">👥</div>
+        <div><div class="ms-num" style="color:var(--purple)">{{ $team->members->count() }}</div><div class="ms-label">أعضاء الفريق</div></div>
+    </div>
+</div>
+
+<div class="filter-bar">
     <div class="filter-tabs">
-      <button class="ftab active">الكل (12)</button>
-      <button class="ftab">لم تبدأ (3)</button>
-      <button class="ftab">قيد التنفيذ (2)</button>
-      <button class="ftab">متأخرة (3)</button>
-      <button class="ftab">منجزة (7)</button>
+        <button class="ftab active">الكل ({{ $totalTasks }})</button>
+        <button class="ftab">لم تبدأ ({{ $todoTasks->count() }})</button>
+        <button class="ftab">قيد التنفيذ ({{ $progressTasks->count() }})</button>
+        <button class="ftab">متأخرة ({{ $lateTasks->count() }})</button>
+        <button class="ftab">منجزة ({{ $doneTasks->count() }})</button>
     </div>
+
     <div class="filter-right">
-      <input class="search-input" placeholder="🔍 ابحث عن مهمة...">
-      <select class="filter-select">
-        <option>كل الأعضاء</option>
-        <option>محمد</option>
-        <option>سارة</option>
-        <option>عمر</option>
-        <option>ليلى</option>
-      </select>
-      <select class="filter-select">
-        <option>كل الأولويات</option>
-        <option>عالية</option>
-        <option>متوسطة</option>
-        <option>منخفضة</option>
-      </select>
-      <div class="view-toggle">
-        <div class="vtoggle active">⊞</div>
-        <div class="vtoggle">☰</div>
-      </div>
+        <input class="search-input" placeholder="🔍 ابحث عن مهمة...">
+
+        <select class="filter-select">
+            <option>كل الأعضاء</option>
+            @foreach($team->members as $member)
+                <option>{{ $member->name }}</option>
+            @endforeach
+        </select>
+
+        <select class="filter-select">
+            <option>كل الحالات</option>
+            <option>لم تبدأ</option>
+            <option>قيد التنفيذ</option>
+            <option>منجزة</option>
+        </select>
     </div>
-  </div>
- 
-  <!-- ══ KANBAN BOARD ══ -->
-  <div class="kanban">
- 
-    <!-- Column 1: Todo -->
+</div>
+
+<div class="kanban">
+
     <div class="kanban-col">
-      <div class="col-head todo">
-        <span>⬜ لم تبدأ</span>
-        <div class="col-count">3</div>
-      </div>
- 
-      <div class="task-card todo" style="animation-delay:.05s">
-        <div class="tc-top">
-          <span class="tc-priority pri-medium">متوسطة</span>
-          <span class="tc-menu">⋮</span>
+        <div class="col-head todo">
+            <span>⬜ لم تبدأ</span>
+            <div class="col-count">{{ $todoTasks->count() }}</div>
         </div>
-        <div class="tc-title">ربط الـ Frontend بالـ Backend</div>
-        <div class="tc-desc">دمج واجهة المستخدم مع الـ API عبر Axios وإدارة الحالة.</div>
-        <span class="tc-cat" style="background:#eff6ff;color:var(--blue)">🖥️ Frontend</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>0%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:0%;background:var(--blue)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--blue)">لي</div>
-          </div>
-          <div class="tc-date">📅 20 مايو</div>
-          <div class="tc-comments">💬 0</div>
-        </div>
-      </div>
- 
-      <div class="task-card todo" style="animation-delay:.10s">
-        <div class="tc-top">
-          <span class="tc-priority pri-low">منخفضة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title">اختبار وحدة الذكاء الاصطناعي</div>
-        <div class="tc-desc">اختبار خوارزمية التنبؤ بمخاطر المشروع وضبط دقتها.</div>
-        <span class="tc-cat" style="background:#fff7ed;color:var(--orange)">🤖 AI</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>0%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:0%;background:var(--orange)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--purple)">م أ</div>
-          </div>
-          <div class="tc-date">📅 1 يونيو</div>
-          <div class="tc-comments">💬 1</div>
-        </div>
-      </div>
- 
-      <div class="task-card todo" style="animation-delay:.15s">
-        <div class="tc-top">
-          <span class="tc-priority pri-low">منخفضة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title">كتابة التوثيق التقني للمشروع</div>
-        <div class="tc-desc">توثيق كل الـ APIs والمكونات في ملف README شامل.</div>
-        <span class="tc-cat" style="background:#f0fdf4;color:var(--green)">📝 توثيق</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>0%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:0%;background:var(--green)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--green)">عم</div>
-          </div>
-          <div class="tc-date">📅 10 يونيو</div>
-          <div class="tc-comments">💬 0</div>
-        </div>
-      </div>
- 
-      <button class="add-task-btn" onclick="openModal()">＋ إضافة مهمة</button>
+
+        @forelse($todoTasks as $task)
+            @include('student.partials.task_card', ['task' => $task, 'type' => 'todo'])
+        @empty
+            <div style="padding:14px;color:var(--muted);font-size:.8rem">لا توجد مهام لم تبدأ.</div>
+        @endforelse
     </div>
- 
-    <!-- Column 2: In Progress -->
+
     <div class="kanban-col">
-      <div class="col-head progress">
-        <span>🔄 قيد التنفيذ</span>
-        <div class="col-count">2</div>
-      </div>
- 
-      <div class="task-card progress" style="animation-delay:.20s">
-        <div class="tc-top">
-          <span class="tc-priority pri-high">عالية</span>
-          <span class="tc-menu">⋮</span>
+        <div class="col-head progress">
+            <span>🔄 قيد التنفيذ</span>
+            <div class="col-count">{{ $progressTasks->count() }}</div>
         </div>
-        <div class="tc-title">تطوير واجهة تسجيل الدخول</div>
-        <div class="tc-desc">بناء صفحة Login و Register مع التحقق من الصحة والتوجيه.</div>
-        <span class="tc-cat" style="background:#eff6ff;color:var(--blue)">🖥️ Frontend</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>65%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:65%;background:var(--blue)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--pink)">سا</div>
-            <div class="assignee-avatar" style="background:var(--blue)">لي</div>
-          </div>
-          <div class="tc-date">📅 12 مايو</div>
-          <div class="tc-comments">💬 3</div>
-        </div>
-      </div>
- 
-      <div class="task-card progress" style="animation-delay:.25s">
-        <div class="tc-top">
-          <span class="tc-priority pri-medium">متوسطة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title">تطوير لوحة تحكم المشرف</div>
-        <div class="tc-desc">بناء صفحة Dashboard المشرف مع إحصائيات الفرق والمشاريع.</div>
-        <span class="tc-cat" style="background:#eff6ff;color:var(--blue)">🖥️ Frontend</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>40%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:40%;background:var(--purple)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--purple)">م أ</div>
-          </div>
-          <div class="tc-date">📅 18 مايو</div>
-          <div class="tc-comments">💬 2</div>
-        </div>
-      </div>
- 
-      <button class="add-task-btn" onclick="openModal()">＋ إضافة مهمة</button>
+
+        @forelse($progressTasks as $task)
+            @include('student.partials.task_card', ['task' => $task, 'type' => 'progress'])
+        @empty
+            <div style="padding:14px;color:var(--muted);font-size:.8rem">لا توجد مهام قيد التنفيذ.</div>
+        @endforelse
     </div>
- 
-    <!-- Column 3: Late -->
+
     <div class="kanban-col">
-      <div class="col-head" style="background:#fef2f2;color:var(--red)">
-        <span>🔴 متأخرة</span>
-        <div class="col-count" style="background:var(--red)">3</div>
-      </div>
- 
-      <div class="task-card late" style="animation-delay:.30s">
-        <div class="late-badge">متأخرة!</div>
-        <div class="tc-top" style="margin-top:20px">
-          <span class="tc-priority pri-high">عالية</span>
-          <span class="tc-menu">⋮</span>
+        <div class="col-head" style="background:#fef2f2;color:var(--red)">
+            <span>🔴 متأخرة</span>
+            <div class="col-count" style="background:var(--red)">{{ $lateTasks->count() }}</div>
         </div>
-        <div class="tc-title">كتابة API المصادقة</div>
-        <div class="tc-desc">بناء endpoints التسجيل والدخول والـ JWT Authentication.</div>
-        <span class="tc-cat" style="background:#fef2f2;color:var(--red)">⚙️ Backend</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>30%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:30%;background:var(--red)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--green)">عم</div>
-          </div>
-          <div class="tc-date late-date">⚠ تأخر 1 يوم</div>
-          <div class="tc-comments">💬 5</div>
-        </div>
-      </div>
- 
-      <div class="task-card late" style="animation-delay:.35s">
-        <div class="late-badge">متأخرة!</div>
-        <div class="tc-top" style="margin-top:20px">
-          <span class="tc-priority pri-high">عالية</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title">إعداد قاعدة البيانات وتنفيذ الـ Migrations</div>
-        <div class="tc-desc">إنشاء كل الجداول وتحديد العلاقات وتنفيذ seed data.</div>
-        <span class="tc-cat" style="background:#fef2f2;color:var(--red)">🗄️ Database</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>50%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:50%;background:var(--red)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--purple)">م أ</div>
-            <div class="assignee-avatar" style="background:var(--green)">عم</div>
-          </div>
-          <div class="tc-date late-date">⚠ تأخر 2 يوم</div>
-          <div class="tc-comments">💬 7</div>
-        </div>
-      </div>
- 
-      <div class="task-card late" style="animation-delay:.38s">
-        <div class="late-badge">متأخرة!</div>
-        <div class="tc-top" style="margin-top:20px">
-          <span class="tc-priority pri-medium">متوسطة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title">تقرير المرحلة الأولى</div>
-        <div class="tc-desc">كتابة تقرير مرحلة التصميم وإرساله للمشرف.</div>
-        <span class="tc-cat" style="background:#fef2f2;color:var(--red)">📝 تقارير</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>80%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:80%;background:var(--orange)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--pink)">سا</div>
-          </div>
-          <div class="tc-date late-date">⚠ تأخر 3 أيام</div>
-          <div class="tc-comments">💬 2</div>
-        </div>
-      </div>
+
+        @forelse($lateTasks as $task)
+            @include('student.partials.task_card', ['task' => $task, 'type' => 'late'])
+        @empty
+            <div style="padding:14px;color:var(--muted);font-size:.8rem">لا توجد مهام متأخرة.</div>
+        @endforelse
     </div>
- 
-    <!-- Column 4: Done -->
+
     <div class="kanban-col">
-      <div class="col-head done">
-        <span>✅ منجزة</span>
-        <div class="col-count">4</div>
-      </div>
- 
-      <div class="task-card done" style="animation-delay:.40s;opacity:0.85">
-        <div class="tc-top">
-          <span class="tc-priority pri-high">عالية</span>
-          <span class="tc-menu">⋮</span>
+        <div class="col-head done">
+            <span>✅ منجزة</span>
+            <div class="col-count">{{ $doneTasks->count() }}</div>
         </div>
-        <div class="tc-title" style="text-decoration:line-through;color:var(--muted)">تصميم قاعدة البيانات ERD</div>
-        <span class="tc-cat" style="background:#f0fdf4;color:var(--green)">✅ مكتملة</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>100%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:100%;background:var(--green)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--purple)">م أ</div>
-          </div>
-          <div class="tc-date" style="color:var(--green)">✓ 1 مايو</div>
-          <div class="tc-comments">💬 4</div>
-        </div>
-      </div>
- 
-      <div class="task-card done" style="animation-delay:.44s;opacity:0.85">
-        <div class="tc-top">
-          <span class="tc-priority pri-high">عالية</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title" style="text-decoration:line-through;color:var(--muted)">تصميم واجهات Figma</div>
-        <span class="tc-cat" style="background:#f0fdf4;color:var(--green)">✅ مكتملة</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>100%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:100%;background:var(--green)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--pink)">سا</div>
-            <div class="assignee-avatar" style="background:var(--blue)">لي</div>
-          </div>
-          <div class="tc-date" style="color:var(--green)">✓ 25 أبريل</div>
-          <div class="tc-comments">💬 6</div>
-        </div>
-      </div>
- 
-      <div class="task-card done" style="animation-delay:.48s;opacity:0.85">
-        <div class="tc-top">
-          <span class="tc-priority pri-medium">متوسطة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title" style="text-decoration:line-through;color:var(--muted)">إعداد بيئة التطوير</div>
-        <span class="tc-cat" style="background:#f0fdf4;color:var(--green)">✅ مكتملة</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>100%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:100%;background:var(--green)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--green)">عم</div>
-          </div>
-          <div class="tc-date" style="color:var(--green)">✓ 20 أبريل</div>
-          <div class="tc-comments">💬 2</div>
-        </div>
-      </div>
- 
-      <div class="task-card done" style="animation-delay:.52s;opacity:0.85">
-        <div class="tc-top">
-          <span class="tc-priority pri-medium">متوسطة</span>
-          <span class="tc-menu">⋮</span>
-        </div>
-        <div class="tc-title" style="text-decoration:line-through;color:var(--muted)">كتابة وثيقة المتطلبات</div>
-        <span class="tc-cat" style="background:#f0fdf4;color:var(--green)">✅ مكتملة</span>
-        <div class="tc-progress">
-          <div class="tcp-top"><span>التقدم</span><span>100%</span></div>
-          <div class="tcp-track"><div class="tcp-fill" style="width:100%;background:var(--green)"></div></div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-assignees">
-            <div class="assignee-avatar" style="background:var(--purple)">م أ</div>
-            <div class="assignee-avatar" style="background:var(--pink)">سا</div>
-          </div>
-          <div class="tc-date" style="color:var(--green)">✓ 15 أبريل</div>
-          <div class="tc-comments">💬 8</div>
-        </div>
-      </div>
- 
+
+        @forelse($doneTasks as $task)
+            @include('student.partials.task_card', ['task' => $task, 'type' => 'done'])
+        @empty
+            <div style="padding:14px;color:var(--muted);font-size:.8rem">لا توجد مهام منجزة.</div>
+        @endforelse
     </div>
-  </div>
- 
-  <!-- ══ MODAL: Add Task ══ -->
-  <div class="modal-overlay" id="modal">
+
+</div>
+
+<div class="modal-overlay" id="modal">
     <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">＋ إضافة مهمة جديدة</div>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
- 
-      <div class="form-group">
-        <label class="form-label">اسم المهمة *</label>
-        <input class="form-input" placeholder="مثال: تطوير صفحة Dashboard">
-      </div>
-      <div class="form-group">
-        <label class="form-label">الوصف</label>
-        <textarea class="form-textarea" placeholder="وصف تفصيلي للمهمة..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">المسؤول</label>
-          <select class="form-select">
-            <option>محمد أحمد</option>
-            <option>سارة علي</option>
-            <option>عمر خالد</option>
-            <option>ليلى يوسف</option>
-          </select>
+        <div class="modal-header">
+            <div class="modal-title">＋ إضافة مهمة جديدة</div>
+            <button class="modal-close" onclick="closeModal()" type="button">✕</button>
         </div>
-        <div class="form-group">
-          <label class="form-label">الموعد النهائي</label>
-          <input class="form-input" type="date">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">الفئة</label>
-          <select class="form-select">
-            <option>🖥️ Frontend</option>
-            <option>⚙️ Backend</option>
-            <option>🗄️ Database</option>
-            <option>🤖 AI</option>
-            <option>📝 توثيق</option>
-            <option>🧪 اختبار</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">الحالة</label>
-          <select class="form-select">
-            <option>⬜ لم تبدأ</option>
-            <option>🔄 قيد التنفيذ</option>
-            <option>✅ منجزة</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">الأولوية</label>
-        <div class="radio-group">
-          <div class="radio-opt sel-high" onclick="selectPri(this,'high')">🔴 عالية</div>
-          <div class="radio-opt" onclick="selectPri(this,'medium')">🟡 متوسطة</div>
-          <div class="radio-opt" onclick="selectPri(this,'low')">🟢 منخفضة</div>
-        </div>
-      </div>
- 
-      <div class="modal-footer">
-        <button class="btn btn-primary" style="flex:1" onclick="closeModal()">✓ حفظ المهمة</button>
-        <button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
-      </div>
+
+        <form method="POST" action="{{ route('student.tasks.store') }}">
+            @csrf
+
+            <div class="form-group">
+                <label class="form-label">اسم المهمة *</label>
+                <input name="title" class="form-input" required placeholder="مثال: تطوير صفحة Dashboard">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">الوصف</label>
+                <textarea name="description" class="form-textarea" placeholder="وصف تفصيلي للمهمة..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">المسؤول</label>
+                    <select name="assigned_to" class="form-select">
+                        <option value="">بدون تحديد</option>
+                        @foreach($team->members as $member)
+                            <option value="{{ $member->id }}">{{ $member->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الموعد النهائي *</label>
+                    <input name="deadline" class="form-input" type="date" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">الحالة</label>
+                <select name="status" class="form-select" required>
+                    <option value="TODO">⬜ لم تبدأ</option>
+                    <option value="IN_PROGRESS">🔄 قيد التنفيذ</option>
+                    <option value="DONE">✅ منجزة</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" style="flex:1" type="submit">✓ حفظ المهمة</button>
+                <button class="btn btn-outline" type="button" onclick="closeModal()">إلغاء</button>
+            </div>
+        </form>
     </div>
-  </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script>
-  function openModal()  { document.getElementById('modal').classList.add('open'); }
-  function closeModal() { document.getElementById('modal').classList.remove('open'); }
-   
-  document.getElementById('modal').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
-  });
-   
-  function selectPri(el, type) {
-    document.querySelectorAll('.radio-opt').forEach(o => {
-      o.className = 'radio-opt';
-    });
-    el.classList.add('sel-' + type);
-  }
-   
-  // Filter tabs
-  document.querySelectorAll('.ftab').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-    });
-  });
-   
-  // View toggle
-  document.querySelectorAll('.vtoggle').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.vtoggle').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-    });
-  });
+function openModal() {
+    document.getElementById('modal').classList.add('open');
+}
 
-  // تفعيل كلاس active للرابط الحالي في السايدبار تلقائياً
-  const navTasks = document.getElementById('nav-tasks');
-  if (navTasks) navTasks.classList.add('active');
+function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+document.querySelectorAll('.ftab').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+const navTasks = document.getElementById('nav-tasks');
+if (navTasks) navTasks.classList.add('active');
 </script>
 @endsection

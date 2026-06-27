@@ -7,262 +7,464 @@
 @endsection
 
 @section('content')
-  <!-- Stats -->
+
+@if ($errors->any())
+  <div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:16px">
+    @foreach ($errors->all() as $error)
+      <div>{{ $error }}</div>
+    @endforeach
+  </div>
+@endif
+
+@if (session('success'))
+  <div class="card" style="background:#dcfce7;color:#166534;margin-bottom:16px">
+    {{ session('success') }}
+  </div>
+@endif
+
+@if(!$team)
+
+  <div class="card" style="text-align:center;padding:40px 25px;margin-bottom:20px">
+    <div style="font-size:54px;margin-bottom:14px">🎓</div>
+
+    <h2 style="font-size:1.7rem;margin-bottom:10px">
+      مرحباً {{ $user->name }} 👋
+    </h2>
+
+    <p style="color:var(--muted);line-height:1.9;max-width:650px;margin:auto">
+      أنت الآن داخل نظام GradSmart. للبدء في إدارة مشروع التخرج، يمكنك إنشاء فريق جديد
+      أو قبول دعوة من أحد الفرق الموجودة.
+    </p>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+      <a href="{{ route('student.teams.create') }}" class="msg-btn" style="text-decoration:none;max-width:220px">
+        🚀 إنشاء فريق
+      </a>
+
+      <a href="#my-invitations" class="msg-btn" style="text-decoration:none;max-width:220px;background:#fff;color:var(--blue);border:1px solid var(--blue)">
+        📨 عرض الدعوات
+      </a>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-num">1</div>
+      <div class="stat-label">الخطوة الأولى</div>
+      <div class="stat-change up">إنشاء فريق أو قبول دعوة</div>
+    </div>
+
+    <div class="stat-card green">
+      <div class="stat-icon">📋</div>
+      <div class="stat-num">2</div>
+      <div class="stat-label">الخطوة الثانية</div>
+      <div class="stat-change up">إنشاء مشروع التخرج</div>
+    </div>
+
+    <div class="stat-card orange">
+      <div class="stat-icon">✅</div>
+      <div class="stat-num">3</div>
+      <div class="stat-label">الخطوة الثالثة</div>
+      <div class="stat-change warn">إدارة المهام والملفات</div>
+    </div>
+
+    <div class="stat-card purple">
+      <div class="stat-icon">📊</div>
+      <div class="stat-num">4</div>
+      <div class="stat-label">الخطوة الرابعة</div>
+      <div class="stat-change up">متابعة التقدم</div>
+    </div>
+  </div>
+
+  <div class="card" id="my-invitations" style="margin-top:20px">
+    <div class="card-header">
+      <div class="card-title">📨 دعوات الانضمام</div>
+    </div>
+
+    @forelse($myInvitations as $invitation)
+      <div class="activity-item" style="align-items:flex-start">
+        <div class="act-icon" style="background:#eff6ff">📩</div>
+        <div class="act-text" style="flex:1">
+          <div class="act-main">
+            دعوة للانضمام إلى فريق:
+            <strong>{{ $invitation->team->name ?? 'فريق غير معروف' }}</strong>
+          </div>
+
+          <div class="act-time" style="line-height:1.8">
+            المرسل: {{ $invitation->sender->name ?? 'غير معروف' }} <br>
+            الدور المقترح: {{ $invitation->member_role }} <br>
+            الملاحظة: {{ $invitation->note ?? 'لا توجد ملاحظة' }}
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <form method="POST" action="{{ route('student.teams.acceptInvitation', $invitation->id) }}">
+              @csrf
+              <button class="msg-btn" type="submit" style="padding:10px 18px">✅ قبول</button>
+            </form>
+
+            <form method="POST" action="{{ route('student.teams.rejectInvitation', $invitation->id) }}">
+              @csrf
+              <button class="msg-btn" type="submit" style="padding:10px 18px;background:#fff;color:#ef4444;border:1px solid #ef4444">
+                ❌ رفض
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    @empty
+      <div class="last-note">
+        لا توجد دعوات حالياً. يمكنك إنشاء فريق جديد من زر "إنشاء فريق".
+      </div>
+    @endforelse
+  </div>
+
+@elseif($team && !$project)
+
+  <div class="card" style="text-align:center;padding:36px 25px;margin-bottom:20px">
+    <div style="font-size:50px;margin-bottom:12px">👥</div>
+
+    <h2 style="font-size:1.6rem;margin-bottom:10px">
+      فريقك جاهز: {{ $team->name }}
+    </h2>
+
+    <p style="color:var(--muted);line-height:1.9">
+      تم إنشاء الفريق أو الانضمام إليه بنجاح. الخطوة التالية هي إنشاء مشروع التخرج.
+    </p>
+
+    <a href="{{ route('student.project.index') }}" class="msg-btn" style="text-decoration:none;max-width:240px;margin:22px auto 0">
+      📋 إنشاء مشروع
+    </a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-num">{{ $team->members->count() }}</div>
+      <div class="stat-label">أعضاء الفريق</div>
+      <div class="stat-change up">الفريق نشط</div>
+    </div>
+
+    <div class="stat-card green">
+      <div class="stat-icon">🏫</div>
+      <div class="stat-num">✓</div>
+      <div class="stat-label">القسم</div>
+      <div class="stat-change up">{{ $team->department->name ?? 'غير محدد' }}</div>
+    </div>
+
+    <div class="stat-card orange">
+      <div class="stat-icon">📋</div>
+      <div class="stat-num">0</div>
+      <div class="stat-label">المشروع</div>
+      <div class="stat-change warn">لم يتم إنشاؤه بعد</div>
+    </div>
+
+    <div class="stat-card purple">
+      <div class="stat-icon">✅</div>
+      <div class="stat-num">0</div>
+      <div class="stat-label">المهام</div>
+      <div class="stat-change up">تظهر بعد إنشاء المشروع</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-header">
+      <div class="card-title">👤 أعضاء الفريق</div>
+      <a class="card-action" href="{{ route('student.teams.management') }}">إدارة الفريق ←</a>
+    </div>
+
+    <div class="activity-list">
+      @foreach($team->members as $member)
+        <div class="activity-item">
+          <div class="act-icon" style="background:#eff6ff">
+            {{ mb_substr($member->name, 0, 1) }}
+          </div>
+          <div class="act-text">
+            <div class="act-main">{{ $member->name }}</div>
+            <div class="act-time">
+              {{ $member->pivot->is_leader ? 'قائد الفريق' : ($member->pivot->member_role ?? 'عضو فريق') }}
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+
+@else
+
   <div class="stats-grid">
     <div class="stat-card blue">
       <div class="stat-icon">📋</div>
-      <div class="stat-num">12</div>
+      <div class="stat-num">{{ $totalTasks }}</div>
       <div class="stat-label">إجمالي المهام</div>
-      <div class="stat-change up">↑ تمت إضافة 2 هذا الأسبوع</div>
+      <div class="stat-change up">مرتبطة بالمشروع الحالي</div>
     </div>
+
     <div class="stat-card green">
       <div class="stat-icon">✅</div>
-      <div class="stat-num">7</div>
+      <div class="stat-num">{{ $doneTasks }}</div>
       <div class="stat-label">مهام منجزة</div>
-      <div class="stat-change up">↑ 58% من الكلي</div>
+      <div class="stat-change up">{{ $projectProgress }}% من الكلي</div>
     </div>
+
     <div class="stat-card orange">
       <div class="stat-icon">⏳</div>
-      <div class="stat-num">3</div>
+      <div class="stat-num">{{ $lateTasks }}</div>
       <div class="stat-label">مهام متأخرة</div>
-      <div class="stat-change warn">⚠ تحتاج متابعة</div>
+      <div class="stat-change warn">تحتاج متابعة</div>
     </div>
+
     <div class="stat-card purple">
       <div class="stat-icon">📅</div>
-      <div class="stat-num">45</div>
+      <div class="stat-num">{{ $daysLeft }}</div>
       <div class="stat-label">يوم متبقي</div>
       <div class="stat-change up">حتى موعد التسليم</div>
     </div>
   </div>
- 
-  <!-- Progress + Risk -->
+
   <div class="progress-section">
- 
-    <!-- Project Progress -->
+
     <div class="card">
       <div class="card-header">
         <div class="card-title">📊 تقدم المشروع</div>
-        <a class="card-action" href="#">عرض التفاصيل ←</a>
+        <a class="card-action" href="{{ route('student.project.index') }}">عرض التفاصيل ←</a>
       </div>
- 
+
       <div class="project-info">
         <div class="project-emoji">🌐</div>
         <div>
-          <div class="project-name">GradSmart — نظام إدارة التخرج</div>
-          <div class="project-meta">👨‍🏫 د. أحمد السالم &nbsp;|&nbsp; 👥 4 أعضاء &nbsp;|&nbsp; 🖥️ Web App</div>
+          <div class="project-name">{{ $project->title }}</div>
+          <div class="project-meta">
+            👨‍🏫 {{ $project->supervisor->name ?? 'لم يتم اختيار مشرف' }}
+            &nbsp;|&nbsp;
+            👥 {{ $team->members->count() }} أعضاء
+            &nbsp;|&nbsp;
+            🖥️ Web App
+          </div>
         </div>
       </div>
- 
+
       <div class="big-progress">
         <div class="big-progress-top">
           <span class="big-progress-label">نسبة الإنجاز الكلية</span>
-          <span class="big-progress-pct">62%</span>
+          <span class="big-progress-pct">{{ $projectProgress }}%</span>
         </div>
         <div class="progress-track">
-          <div class="progress-fill" style="width:62%"></div>
+          <div class="progress-fill" style="width:{{ $projectProgress }}%"></div>
         </div>
       </div>
- 
+
       <div class="mini-stats">
         <div class="mini-stat">
-          <div class="mini-stat-num" style="color:var(--green)">7</div>
+          <div class="mini-stat-num" style="color:var(--green)">{{ $doneTasks }}</div>
           <div class="mini-stat-label">منجزة ✅</div>
         </div>
         <div class="mini-stat">
-          <div class="mini-stat-num" style="color:var(--blue)">2</div>
+          <div class="mini-stat-num" style="color:var(--blue)">{{ $progressTasks }}</div>
           <div class="mini-stat-label">قيد التنفيذ 🔄</div>
         </div>
         <div class="mini-stat">
-          <div class="mini-stat-num" style="color:var(--orange)">3</div>
+          <div class="mini-stat-num" style="color:var(--orange)">{{ $lateTasks }}</div>
           <div class="mini-stat-label">متأخرة ⚠</div>
         </div>
         <div class="mini-stat">
-          <div class="mini-stat-num" style="color:var(--muted)">0</div>
+          <div class="mini-stat-num" style="color:var(--muted)">{{ $todoTasks }}</div>
           <div class="mini-stat-label">لم تبدأ ⬜</div>
         </div>
       </div>
     </div>
- 
-    <!-- Risk + Supervisor -->
+
     <div style="display:flex;flex-direction:column;gap:16px;">
- 
-      <!-- Risk -->
       <div class="risk-card">
         <div class="card-header">
           <div class="card-title">🤖 تحليل الذكاء الاصطناعي</div>
         </div>
+
         <div class="risk-meter">
           <div class="risk-circle">
             <div class="risk-circle-inner">
-              <div class="risk-pct">منخفض</div>
+              <div class="risk-pct" style="color:{{ $riskColor }}">{{ $riskLevel }}</div>
               <div class="risk-text">مستوى الخطر</div>
             </div>
           </div>
-          <div class="risk-label">🟢 المشروع على المسار الصحيح</div>
+          <div class="risk-label">{{ $riskMessage }}</div>
         </div>
+
         <div class="risk-factors">
           <div class="risk-factor">
             <span class="rf-label">معدل الإنجاز</span>
-            <div class="rf-bar-wrap"><div class="rf-bar" style="width:75%;background:var(--green)"></div></div>
+            <div class="rf-bar-wrap">
+              <div class="rf-bar" style="width:{{ $projectProgress }}%;background:var(--green)"></div>
+            </div>
           </div>
+
           <div class="risk-factor">
             <span class="rf-label">الالتزام بالمواعيد</span>
-            <div class="rf-bar-wrap"><div class="rf-bar" style="width:60%;background:var(--yellow)"></div></div>
+            <div class="rf-bar-wrap">
+              <div class="rf-bar" style="width:{{ $lateTasks > 0 ? 45 : 85 }}%;background:{{ $lateTasks > 0 ? 'var(--yellow)' : 'var(--green)' }}"></div>
+            </div>
           </div>
+
           <div class="risk-factor">
             <span class="rf-label">نشاط الفريق</span>
-            <div class="rf-bar-wrap"><div class="rf-bar" style="width:85%;background:var(--green)"></div></div>
+            <div class="rf-bar-wrap">
+              <div class="rf-bar" style="width:{{ $team->members->count() > 1 ? 85 : 45 }}%;background:var(--green)"></div>
+            </div>
           </div>
         </div>
       </div>
- 
     </div>
+
   </div>
- 
-  <!-- Bottom Row -->
+
   <div class="bottom-row">
- 
-    <!-- Tasks + Activity -->
+
     <div style="display:flex;flex-direction:column;gap:16px;">
- 
-      <!-- Tasks -->
+
       <div class="card" style="animation-delay:0.35s">
         <div class="card-header">
           <div class="card-title">✅ أحدث المهام</div>
-          <a class="card-action" href="#">كل المهام ←</a>
+          <a class="card-action" href="{{ route('student.tasks.index') }}">كل المهام ←</a>
         </div>
+
         <div class="tasks-list">
-          <div class="task-item">
-            <div class="task-check done">✓</div>
-            <div class="task-info">
-              <div class="task-name done">تصميم قاعدة البيانات</div>
-              <div class="task-meta"><span>👤 محمد</span><span>📅 تم 1 مايو</span></div>
+          @forelse($tasks->take(4) as $task)
+            <div class="task-item">
+              <div class="task-check {{ $task->status === 'DONE' ? 'done' : ($task->status === 'IN_PROGRESS' ? 'inprogress' : '') }}">
+                {{ $task->status === 'DONE' ? '✓' : '' }}
+              </div>
+
+              <div class="task-info">
+                <div class="task-name {{ $task->status === 'DONE' ? 'done' : '' }}">
+                  {{ $task->title }}
+                </div>
+                <div class="task-meta">
+                  <span>👤 {{ $task->assignee->name ?? 'غير محدد' }}</span>
+                  <span>📅 {{ $task->deadline ?? 'بدون موعد' }}</span>
+                </div>
+              </div>
+
+              @php
+                $tagClass = $task->status === 'DONE'
+                  ? 'tag-done'
+                  : ($task->status === 'IN_PROGRESS' ? 'tag-progress' : 'tag-todo');
+              @endphp
+
+              <span class="task-tag {{ $tagClass }}">
+                {{ $task->status === 'DONE' ? 'منجزة' : ($task->status === 'IN_PROGRESS' ? 'قيد التنفيذ' : 'لم تبدأ') }}
+              </span>
             </div>
-            <span class="task-tag tag-done">منجزة</span>
-          </div>
-          <div class="task-item">
-            <div class="task-check inprogress"></div>
-            <div class="task-info">
-              <div class="task-name">تطوير واجهة تسجيل الدخول</div>
-              <div class="task-meta"><span>👤 سارة</span><span>📅 12 مايو</span></div>
-            </div>
-            <span class="task-tag tag-progress">قيد التنفيذ</span>
-          </div>
-          <div class="task-item">
-            <div class="task-check"></div>
-            <div class="task-info">
-              <div class="task-name">كتابة API المصادقة</div>
-              <div class="task-meta"><span>👤 عمر</span><span>📅 8 مايو</span></div>
-            </div>
-            <span class="task-tag tag-late">متأخرة</span>
-          </div>
-          <div class="task-item">
-            <div class="task-check"></div>
-            <div class="task-info">
-              <div class="task-name">ربط الـ Frontend بالـ Backend</div>
-              <div class="task-meta"><span>👤 ليلى</span><span>📅 20 مايو</span></div>
-            </div>
-            <span class="task-tag tag-todo">لم تبدأ</span>
-          </div>
+          @empty
+            <div class="last-note">لا توجد مهام بعد.</div>
+          @endforelse
         </div>
       </div>
- 
-      <!-- Activity -->
+
       <div class="card" style="animation-delay:0.4s">
         <div class="card-header">
           <div class="card-title">📜 سجل الأنشطة</div>
           <a class="card-action" href="#">المزيد ←</a>
         </div>
+
         <div class="activity-list">
-          <div class="activity-item">
-            <div class="act-icon" style="background:#eff6ff">📁</div>
-            <div class="act-text">
-              <div class="act-main">سارة رفعت تقرير المرحلة الثانية</div>
-              <div class="act-time">منذ ساعتين</div>
+          @foreach($activities->take(4) as $activity)
+            <div class="activity-item">
+              <div class="act-icon" style="background:{{ $activity['bg'] }}">{{ $activity['icon'] }}</div>
+              <div class="act-text">
+                <div class="act-main">{{ $activity['text'] }}</div>
+                <div class="act-time">{{ $activity['time'] }}</div>
+              </div>
             </div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon" style="background:#f0fdf4">✅</div>
-            <div class="act-text">
-              <div class="act-main">عمر أنجز مهمة تصميم الـ ERD</div>
-              <div class="act-time">منذ 5 ساعات</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon" style="background:#faf5ff">💬</div>
-            <div class="act-text">
-              <div class="act-main">د. أحمد أضاف ملاحظة على المشروع</div>
-              <div class="act-time">أمس 6:30 م</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon" style="background:#fff7ed">⚠️</div>
-            <div class="act-text">
-              <div class="act-main">تنبيه: مهمة "API المصادقة" تأخرت</div>
-              <div class="act-time">أمس 9:00 ص</div>
-            </div>
-          </div>
+          @endforeach
         </div>
       </div>
     </div>
- 
-    <!-- Supervisor + Deadlines -->
+
     <div style="display:flex;flex-direction:column;gap:16px;">
- 
-      <!-- Supervisor -->
+
       <div class="card" style="animation-delay:0.45s">
         <div class="card-header">
           <div class="card-title">👨‍🏫 المشرف</div>
         </div>
-        <div class="supervisor-card">
-          <div class="sup-avatar">أح</div>
-          <div>
-            <div class="sup-name">د. أحمد السالم</div>
-            <div class="sup-title">أستاذ هندسة البرمجيات</div>
+
+        @if($project->supervisor)
+          <div class="supervisor-card">
+            <div class="sup-avatar">{{ mb_substr($project->supervisor->name, 0, 2) }}</div>
+            <div>
+              <div class="sup-name">{{ $project->supervisor->name }}</div>
+              <div class="sup-title">مشرف مشروع التخرج</div>
+            </div>
+            <div class="sup-status">🟢 متاح</div>
           </div>
-          <div class="sup-status">🟢 متاح</div>
-        </div>
-        <div class="last-note">
-          "أداء ممتاز في الجزء الخلفي. أرجو التركيز على واجهة المستخدم وتحسين تجربة الطالب قبل الموعد النهائي."
-          <div class="note-from">📅 أمس، 6:30 م</div>
-        </div>
-        <button class="msg-btn">💬 إرسال رسالة</button>
+
+          <div class="last-note">
+            لا توجد ملاحظات حديثة من المشرف.
+            <div class="note-from">📅 اليوم</div>
+          </div>
+
+          <a href="{{ url('/student/chat') }}" class="msg-btn" style="text-decoration:none">💬 إرسال رسالة</a>
+        @else
+          <div class="last-note">
+            لم يتم اختيار مشرف بعد. يمكنك اختيار مشرف مناسب من صفحة المشروع.
+          </div>
+          <a href="{{ route('student.project.index') }}" class="msg-btn" style="text-decoration:none">👨‍🏫 اختيار مشرف</a>
+        @endif
       </div>
- 
-      <!-- Upcoming Deadlines -->
+
       <div class="card" style="animation-delay:0.5s">
         <div class="card-header">
           <div class="card-title">📅 المواعيد القادمة</div>
         </div>
+
         <div class="deadline-items">
           <div class="dl-item">
-            <div class="dl-dot" style="background:var(--orange)"></div>
-            <div class="dl-name">تسليم التقرير المرحلي</div>
-            <div class="dl-date">12 مايو</div>
-            <span class="dl-urgent" style="background:#fff7ed;color:var(--orange)">3 أيام</span>
-          </div>
-          <div class="dl-item">
-            <div class="dl-dot" style="background:var(--blue)"></div>
-            <div class="dl-name">اجتماع المشرف الأسبوعي</div>
-            <div class="dl-date">14 مايو</div>
-            <span class="dl-urgent" style="background:#eff6ff;color:var(--blue)">5 أيام</span>
-          </div>
-          <div class="dl-item">
             <div class="dl-dot" style="background:var(--purple)"></div>
-            <div class="dl-name">عرض المشروع النهائي</div>
-            <div class="dl-date">23 يونيو</div>
-            <span class="dl-urgent" style="background:#faf5ff;color:var(--purple)">45 يوم</span>
+            <div class="dl-name">موعد تسليم المشروع</div>
+            <div class="dl-date">{{ $project->expected_end_date ?? 'غير محدد' }}</div>
+            <span class="dl-urgent" style="background:#faf5ff;color:var(--purple)">
+              {{ $daysLeft }} يوم
+            </span>
           </div>
+
+          @foreach($tasks->where('status', '!=', 'DONE')->take(2) as $task)
+            <div class="dl-item">
+              <div class="dl-dot" style="background:var(--orange)"></div>
+              <div class="dl-name">{{ $task->title }}</div>
+              <div class="dl-date">{{ $task->deadline ?? 'غير محدد' }}</div>
+              <span class="dl-urgent" style="background:#fff7ed;color:var(--orange)">
+                مهمة
+              </span>
+            </div>
+          @endforeach
         </div>
       </div>
- 
+
     </div>
   </div>
+
+@endif
+
 @endsection
 
 @section('scripts')
 <script>
-    // تفعيل كلاس active للرابط الحالي في السايدبار تلقائياً
-    document.getElementById('nav-dashboard').classList.add('active');
+const dashboardNav = document.getElementById('nav-dashboard');
+if (dashboardNav) dashboardNav.classList.add('active');
+
+const themeBtn = document.getElementById('themeToggle');
+
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+    if (themeBtn) themeBtn.textContent = '☀️';
+}
+
+if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        themeBtn.textContent = isDark ? '☀️' : '🌙';
+    });
+}
 </script>
 @endsection
