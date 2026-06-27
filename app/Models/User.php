@@ -9,8 +9,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public $timestamps = false; // تعطيل التوقيت الافتراضي لـ Laravel
 
     protected $fillable = [
         'student_id',
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'is_active',
         'department_id',
         'is_department_head',
+        'created_at'
     ];
 
     protected $hidden = [
@@ -45,6 +47,25 @@ class User extends Authenticatable
     }
 
         public function supervisedTeams()
+            'created_at' => 'datetime',
+        ];
+    }
+
+    // علاقة المستخدم بالدور (User belongs to a Role)
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    // علاقة الطالب بالفرق (طالب واحد قد ينضم لعدة فرق عبر جدول team_members)
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
+                    ->withPivot('is_leader', 'joined_at');
+    }
+
+    // علاقة المشرف بالفرق التي يشرف عليها (Supervisor oversees many Teams)
+    public function supervisedTeams()
     {
         return $this->hasMany(Team::class, 'supervisor_id');
     }

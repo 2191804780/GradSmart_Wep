@@ -10,6 +10,8 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\MessageController;
 use App\Models\Department;
+use App\Http\Controllers\Supervisor\SupervisorController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -132,26 +134,14 @@ Route::post('/team-invitations/{invitation}/reject', [TeamController::class, 're
 });
 
 // --- Supervisor Routes ---
-Route::prefix('supervisor')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('supervisor.supervisor_dashboard');
-    });
-
-    Route::get('/dashboard-php', function () {
-        return view('supervisor.supervisor_dashboard_php');
-    });
-
-    Route::get('/projects', function () {
-        return view('supervisor.supervisor_projects');
-    });
-
-    Route::get('/chat', function () {
-        return view('supervisor.supervisor_chat');
-    });
-
-    Route::get('/chat-php', function () {
-        return view('supervisor.supervisor_chat_php');
-    });
+Route::prefix('supervisor')->name('supervisor.')->group(function () {
+    Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
+    Route::get('/projects', [SupervisorController::class, 'projects'])->name('projects');
+    Route::post('/projects/{team}/evaluation', [SupervisorController::class, 'storeEvaluation'])->name('storeEvaluation');
+    Route::get('/chat', [SupervisorController::class, 'chat'])->name('chat');
+    Route::post('/chat/{team}/send', [SupervisorController::class, 'sendMessage'])->name('sendMessage');
+    Route::post('/request/{team}/accept', [SupervisorController::class, 'acceptRequest'])->name('acceptRequest');
+    Route::post('/request/{team}/reject', [SupervisorController::class, 'rejectRequest'])->name('rejectRequest');
 });
 
 // --- Admin Routes ---
