@@ -2,21 +2,17 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
-=======
 use Illuminate\Database\Eloquent\Factories\HasFactory;
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
 use Illuminate\Database\Eloquent\Model;
 
 class File extends Model
 {
-<<<<<<< HEAD
-=======
     use HasFactory;
 
-    public $timestamps = false; // تعطيل التوقيت الافتراضي لـ Laravel
+    // تعطيل updated_at لأن الجدول يستخدم uploaded_at فقط
+    public $timestamps = false;
 
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // الحقول المسموح بتعبئتها
     protected $fillable = [
         'project_id',
         'filename',
@@ -25,39 +21,24 @@ class File extends Model
         'version',
         'is_final_submission',
         'uploaded_by',
-<<<<<<< HEAD
+        'uploaded_at',
     ];
 
-    public $timestamps = false;
-
-    public function project()
-    {
-        return $this->belongsTo(Project::class);
-    }
-
-=======
-        'uploaded_at'
-    ];
-
+    // تحويل أنواع البيانات تلقائياً
     protected $casts = [
         'is_final_submission' => 'boolean',
-        'uploaded_at' => 'datetime'
+        'uploaded_at' => 'datetime',
     ];
 
-    // علاقة الملف بالمشروع الذي يخصه (File belongs to a Project)
+    // علاقة الملف بالمشروع
     public function project()
     {
         return $this->belongsTo(Project::class, 'project_id');
     }
 
-    // علاقة الملف بمن رفعه (File was uploaded by a User)
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // علاقة الملف بالمستخدم الذي قام برفعه
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45

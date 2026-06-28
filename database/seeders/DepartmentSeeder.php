@@ -2,38 +2,31 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Department;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Seeder;
 
 class DepartmentSeeder extends Seeder
 {
     public function run(): void
     {
-        
-    
+        $departments = [
+            ['name' => 'قسم هندسة البرمجيات', 'code' => 'SE', 'description' => 'قسم هندسة البرمجيات'],
+            ['name' => 'قسم الشبكات', 'code' => 'NET', 'description' => 'قسم الشبكات'],
+            ['name' => 'قسم نظم التشغيل', 'code' => 'OS', 'description' => 'قسم نظم التشغيل'],
+            ['name' => 'قسم الذكاء الاصطناعي', 'code' => 'AI', 'description' => 'قسم الذكاء الاصطناعي'],
+            ['name' => 'قسم الأمن السيبراني', 'code' => 'CYB', 'description' => 'قسم الأمن السيبراني'],
+            ['name' => 'قسم الحوسبة المتنقلة', 'code' => 'MC', 'description' => 'قسم الحوسبة المتنقلة'],
+            ['name' => 'قسم برمجة الإنترنت', 'code' => 'WEB', 'description' => 'قسم برمجة الإنترنت'],
+        ];
 
         foreach ($departments as $department) {
-            Department::firstOrCreate(
+            Department::updateOrCreate(
                 ['code' => $department['code']],
-                $department
+                [
+                    'name' => $department['name'],
+                    'description' => $department['description'],
+                ]
             );
         }
-    }
-}
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('departments')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
-        // نضيف الأقسام الأكاديمية الصحيحة الخاصة بالمشروع
-        DB::table('departments')->insert([
-            ['name' => 'هندسة البرمجيات',    'code' => 'SE',  'description' => 'قسم هندسة البرمجيات'],
-            ['name' => 'شبكات',               'code' => 'NET', 'description' => 'قسم الشبكات'],
-            ['name' => 'نظم تشغيل',           'code' => 'OS',  'description' => 'قسم نظم التشغيل'],
-            ['name' => 'ذكاء اصطناعي',        'code' => 'AI',  'description' => 'قسم الذكاء الاصطناعي'],
-            ['name' => 'أمن سيبراني',         'code' => 'CYB', 'description' => 'قسم الأمن السيبراني'],
-            ['name' => 'الحوسبة المتنقلة',    'code' => 'MC',  'description' => 'قسم الحوسبة المتنقلة'],
-            ['name' => 'برمجة الإنترنت',      'code' => 'WEB', 'description' => 'قسم برمجة الإنترنت'],
-        ]);
     }
 }

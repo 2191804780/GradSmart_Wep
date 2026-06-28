@@ -9,11 +9,10 @@ class Team extends Model
 {
     use HasFactory;
 
-<<<<<<< HEAD
-=======
-    public $timestamps = false; // تعطيل التوقيت الافتراضي لـ Laravel
+    // تعطيل updated_at لأن الجدول يحتوي فقط على created_at
+    public $timestamps = false;
 
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // الحقول المسموح بإدخالها
     protected $fillable = [
         'name',
         'department_id',
@@ -21,77 +20,47 @@ class Team extends Model
         'max_members',
         'supervisor_id',
         'created_by',
-<<<<<<< HEAD
+        'created_at',
     ];
 
-    public $timestamps = false;
-
-    public function department()
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-=======
-        'created_at'
-    ];
-
-    // علاقة الفريق بالقسم الأكاديمي (Team belongs to a Department)
+    // القسم الأكاديمي الذي يتبع له الفريق
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
 
-    // علاقة الفريق بالمشرف المسند إليه (Team belongs to a Supervisor)
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // المشرف على الفريق
     public function supervisor()
     {
         return $this->belongsTo(User::class, 'supervisor_id');
     }
 
-<<<<<<< HEAD
-=======
-    // علاقة الفريق بمنشئه (طالب) (Team was created by a User)
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // الطالب الذي أنشأ الفريق
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-<<<<<<< HEAD
+    // أعضاء الفريق
     public function members()
     {
         return $this->belongsToMany(
-         User::class, 
-        'team_members',
-        'team_id', 
-        'user_id'
-        
-        ) ->withPivot('is_leader' , 'member_role' , 'joined_at');
+            User::class,
+            'team_members',
+            'team_id',
+            'user_id'
+        )->withPivot('is_leader', 'member_role', 'joined_at');
     }
 
-    public function project()
-    {
-        return $this->hasOne(Project::class);
-    }
-}
-=======
-    // علاقة الفريق بأعضائه (الطلاب) (Team has many Users)
-    public function members()
-    {
-        return $this->belongsToMany(User::class, 'team_members', 'team_id', 'user_id')
-                    ->withPivot('is_leader', 'joined_at');
-    }
-
-    // علاقة الفريق بمشروع التخرج الخاص به (Team has one Project)
+    // مشروع التخرج الخاص بالفريق
     public function project()
     {
         return $this->hasOne(Project::class, 'team_id');
     }
 
-    // علاقة الفريق بالتقييمات التي حصل عليها (Team has many Evaluations)
+    // تقييمات الفريق
     public function evaluations()
     {
         return $this->hasMany(Evaluation::class, 'team_id');
     }
 }
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45

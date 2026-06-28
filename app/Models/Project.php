@@ -9,128 +9,90 @@ class Project extends Model
 {
     use HasFactory;
 
-<<<<<<< HEAD
+    // تعطيل التوقيت الافتراضي لأن الجدول يستخدم created_at فقط
+    public $timestamps = false;
+
+    // الحقول المسموح بتعبئتها
     protected $fillable = [
         'title',
         'description',
         'keywords',
-=======
-    public $timestamps = false; // تعطيل التوقيت الافتراضي لـ Laravel
-
-    protected $fillable = [
-        'title',
-        'description',
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
         'status',
         'team_id',
         'supervisor_id',
         'expected_end_date',
         'actual_end_date',
         'progress',
-<<<<<<< HEAD
+        'created_at',
     ];
 
-    public $timestamps = false;
-
-    public function team()
-    {
-        return $this->belongsTo(Team::class);
-    }
-
-=======
-        'created_at'
-    ];
-
+    // تحويل أنواع البيانات تلقائياً
     protected $casts = [
         'expected_end_date' => 'date',
-        'actual_end_date' => 'date',
-        'progress' => 'decimal:2',
-        'created_at' => 'datetime'
+        'actual_end_date'   => 'date',
+        'progress'          => 'decimal:2',
+        'created_at'        => 'datetime',
     ];
 
-    // علاقة المشروع بالفريق المالك له (Project belongs to a Team)
+    // علاقة المشروع بالفريق
     public function team()
     {
         return $this->belongsTo(Team::class, 'team_id');
     }
 
-    // علاقة المشروع بالمشرف المسؤول عنه (Project belongs to a Supervisor)
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // علاقة المشروع بالمشرف
     public function supervisor()
     {
         return $this->belongsTo(User::class, 'supervisor_id');
     }
 
-<<<<<<< HEAD
-    public function milestones()
-    {
-        return $this->hasMany(Milestone::class);
-    }
-
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    public function files()
-    {
-        return $this->hasMany(File::class);
-    }
-
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-
-    public function aiReports()
-    {
-        return $this->hasMany(AiReport::class);
-    }
-}
-=======
-    // علاقة المشروع بمراحله (Project has many Milestones)
+    // مراحل المشروع
     public function milestones()
     {
         return $this->hasMany(Milestone::class, 'project_id');
     }
 
-    // علاقة المشروع بمهامه (Project has many Tasks)
+    // مهام المشروع
     public function tasks()
     {
         return $this->hasMany(Task::class, 'project_id');
     }
 
-    // علاقة المشروع بملفاته المرفوعة (Project has many Files)
+    // ملفات المشروع
     public function files()
     {
         return $this->hasMany(File::class, 'project_id');
     }
 
-    // علاقة المشروع بالتعليقات (Project has many Comments)
+    // تعليقات المشروع
     public function comments()
     {
         return $this->hasMany(Comment::class, 'project_id');
     }
 
-    // علاقة المشروع بتقارير الذكاء الاصطناعي (Project has many AiReports)
+    // تقارير الذكاء الاصطناعي
     public function aiReports()
     {
         return $this->hasMany(AiReport::class, 'project_id');
     }
 
     /**
-     * إعادة حساب نسبة إنجاز المشروع بناءً على المهام المكتملة تلقائياً
+     * إعادة حساب نسبة إنجاز المشروع تلقائياً
      */
     public function recalculateProgress()
     {
         $totalTasks = $this->tasks()->count();
+
         if ($totalTasks === 0) {
-            $this->progress = 0.00;
+            $this->progress = 0;
         } else {
-            $doneTasks = $this->tasks()->where('status', 'DONE')->count();
+            $doneTasks = $this->tasks()
+                ->where('status', 'DONE')
+                ->count();
+
             $this->progress = round(($doneTasks / $totalTasks) * 100, 2);
         }
+
         $this->save();
     }
 }
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45

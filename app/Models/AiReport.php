@@ -2,55 +2,40 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
-=======
 use Illuminate\Database\Eloquent\Factories\HasFactory;
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
 use Illuminate\Database\Eloquent\Model;
 
 class AiReport extends Model
 {
-<<<<<<< HEAD
-=======
     use HasFactory;
 
-    public $timestamps = false; // تعطيل التوقيت الافتراضي لـ Laravel
-
+    // اسم الجدول
     protected $table = 'ai_reports';
 
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
+    // تعطيل updated_at لأن الجدول يحتوي فقط على generated_at
+    public $timestamps = false;
+
+    // الحقول المسموح بتعبئتها
     protected $fillable = [
         'project_id',
         'risk_level',
         'delay_probability',
         'completion_rate',
         'time_consumed_rate',
-<<<<<<< HEAD
         'generated_at',
     ];
 
-    public $timestamps = false;
-
-    public function project()
-    {
-        return $this->belongsTo(Project::class);
-    }
-}
-=======
-        'generated_at'
-    ];
-
+    // تحويل أنواع البيانات تلقائياً
     protected $casts = [
         'delay_probability' => 'float',
         'completion_rate' => 'float',
         'time_consumed_rate' => 'float',
-        'generated_at' => 'datetime'
+        'generated_at' => 'datetime',
     ];
 
-    // علاقة تقرير الذكاء الاصطناعي بالمشروع الذي يخصه (AiReport belongs to a Project)
+    // علاقة التقرير بالمشروع
     public function project()
     {
         return $this->belongsTo(Project::class, 'project_id');
     }
 }
->>>>>>> 7cdfcbbcf8653648d8c141c38b63f18a621a6c45
