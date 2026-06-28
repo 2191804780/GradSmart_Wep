@@ -11,6 +11,7 @@ use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\MessageController;
 use App\Models\Department;
 use App\Http\Controllers\Supervisor\SupervisorController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -130,6 +131,9 @@ Route::post('/team-invitations/{invitation}/reject', [TeamController::class, 're
     
     Route::post('/project/request-supervisor/{supervisor}', [ProjectController::class, 'requestSupervisor'])
     ->name('student.project.requestSupervisor');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])
+    ->name('student.notifications');
 
 });
 

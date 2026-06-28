@@ -84,7 +84,7 @@ class Task extends Model
     }
 
     // نفس علاقة subtasks لكن باسم آخر للتوافق مع أي كود سابق
-    public function subTasks()
+    public function children()
     {
         return $this->hasMany(Task::class, 'parent_id');
     }

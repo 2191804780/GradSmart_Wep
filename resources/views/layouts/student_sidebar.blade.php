@@ -32,15 +32,15 @@
       <span class="nav-icon">💬</span> المحادثة
       <span class="nav-badge"></span>
     </a>
-    <a class="nav-item" href="#" id="nav-notifications">
+    <a class="nav-item" href="/student/notifications" id="nav-notifications">
       <span class="nav-icon">🔔</span> الإشعارات
     </a>
  
     <span class="nav-label">الحساب</span>
-    <a class="nav-item" href="#" id="nav-profile">
+    <a class="nav-item" href="/student/profile" id="nav-profile">
       <span class="nav-icon">👤</span> ملفي الشخصي
     </a>
-    <a class="nav-item" href="#" id="nav-settings">
+    <a class="nav-item" href="/student/settings" id="nav-settings">
       <span class="nav-icon">⚙️</span> الإعدادات
     </a>
 
