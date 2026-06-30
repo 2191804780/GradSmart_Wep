@@ -265,7 +265,7 @@ class TeamController extends Controller
         ]);
         $invitation->update(['status' => 'ACCEPTED']);
 
-        return redirect()->back()->route('student.teams.management')->with('success', 'تم قبول الدعوة والانضمام للفريق بنجاح.');
+        return redirect()->route('student.teams.management')->with('success', 'تم قبول الدعوة والانضمام للفريق بنجاح.');
     }
 
     public function rejectInvitation(TeamInvitation $invitation)

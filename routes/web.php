@@ -6,12 +6,14 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\StudentActivityController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\MessageController;
 use App\Models\Department;
 use App\Http\Controllers\Supervisor\SupervisorController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\StudentAccountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +55,10 @@ Route::prefix('student')->group(function () {
     Route::get('/dashboard-php', function () {
         return view('student.student_dashboard_php');
     });
+
+    // صفحة سجل الأنشطة
+     Route::get('/activities', [StudentActivityController::class, 'index'])
+    ->name('student.activities.index');
 
     Route::get('/chat', function () {
         return view('student.student_chat');
@@ -134,6 +140,39 @@ Route::post('/team-invitations/{invitation}/reject', [TeamController::class, 're
 
     Route::get('/notifications', [NotificationController::class, 'index'])
     ->name('student.notifications');
+
+
+Route::get('/profile', [StudentAccountController::class, 'profile'])
+    ->name('student.profile');
+
+Route::get('/settings', [StudentAccountController::class, 'settings'])
+    ->name('student.settings');
+
+Route::post('/profile/update', [StudentAccountController::class, 'updateProfile'])
+    ->name('student.profile.update');
+
+Route::post('/settings/password', [StudentAccountController::class, 'updatePassword'])
+    ->name('student.password.update');
+
+Route::post('/logout', [StudentAccountController::class, 'logout'])
+    ->name('student.logout');
+
+    // صفحة الإعدادات
+Route::get('/student/settings',
+    [StudentAccountController::class,'settings'])
+    ->name('student.settings');
+
+
+// تحديث الملف الشخصي
+Route::post('/student/profile/update',
+    [StudentAccountController::class,'updateProfile'])
+    ->name('student.profile.update');
+
+
+// تغيير كلمة المرور
+Route::post('/student/password/update',
+    [StudentAccountController::class,'updatePassword'])
+    ->name('student.password.update');
 
 });
 

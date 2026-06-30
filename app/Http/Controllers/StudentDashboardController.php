@@ -38,10 +38,12 @@ class StudentDashboardController extends Controller
         $riskLevel = 'منخفض';
         $riskColor = 'var(--green)';
         $riskMessage = 'المشروع على المسار الصحيح';
+        $achievementRate = 0;
+        $deadlineCommitment = 100;
+        $teamActivity = 0;
 
         if ($team) {
             $project = Project::where('team_id', $team->id)
-                ->with('supervisor')
                 ->first();
 
             if ($project) {
@@ -77,21 +79,40 @@ class StudentDashboardController extends Controller
                         )
                     );
                 }
+            // حساب مؤشرات التحليل الذكي
+$achievementRate = $projectProgress;
 
-                if ($projectProgress < 40 || $lateTasks >= 3) {
-                    $riskLevel = 'مرتفع';
-                    $riskColor = 'var(--orange)';
-                    $riskMessage = 'المشروع يحتاج متابعة';
-                } elseif ($projectProgress < 70 || $lateTasks > 0) {
-                    $riskLevel = 'متوسط';
-                    $riskColor = 'var(--yellow)';
-                    $riskMessage = 'المشروع يحتاج بعض التنظيم';
-                }
+// الالتزام بالمواعيد: إذا لا توجد مهام متأخرة فهو ممتاز
+$deadlineCommitment = $totalTasks > 0
+    ? round((($totalTasks - $lateTasks) / $totalTasks) * 100)
+    : 100;
+
+// نشاط الفريق: نحسبه بشكل مبسط من وجود مهام حديثة
+$teamActivity = $tasks->where('created_at', '>=', now()->subDays(7))->count() > 0 ? 80 : 40;
+
+// تحليل مستوى الخطر بناءً على الإنجاز والمهام المتأخرة والأيام المتبقية
+if ($projectProgress < 30 && $daysLeft !== '--' && $daysLeft <= 7) {
+    $riskLevel = 'مرتفع';
+    $riskColor = 'var(--orange)';
+    $riskMessage = 'المشروع يحتاج متابعة عاجلة بسبب انخفاض الإنجاز واقتراب موعد التسليم.';
+} elseif ($lateTasks >= 3) {
+    $riskLevel = 'مرتفع';
+    $riskColor = 'var(--orange)';
+    $riskMessage = 'يوجد عدد كبير من المهام المتأخرة، يجب تنظيم العمل سريعاً.';
+} elseif ($projectProgress < 60 || $lateTasks > 0) {
+    $riskLevel = 'متوسط';
+    $riskColor = 'var(--yellow)';
+    $riskMessage = 'المشروع يحتاج متابعة وتحسين الالتزام بالمواعيد.';
+} else {
+    $riskLevel = 'منخفض';
+    $riskColor = 'var(--green)';
+    $riskMessage = 'المشروع يسير بشكل جيد وعلى المسار الصحيح.';
+}
             }
         }
 
         $activities = collect();
-
+        
         if ($team) {
             $activities->push([
                 'icon' => '👥',
@@ -135,7 +156,10 @@ class StudentDashboardController extends Controller
             'riskLevel',
             'riskColor',
             'riskMessage',
-            'activities'
+            'activities',
+            'achievementRate',
+           'deadlineCommitment',
+               'teamActivity'
         ));
     }
 }

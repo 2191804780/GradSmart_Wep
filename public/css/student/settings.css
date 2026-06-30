@@ -1,0 +1,125 @@
+.settings-page {
+
+    max-width: 900px;
+
+    margin: auto;
+
+    padding: 30px;
+
+}
+
+.page-header {
+
+    margin-bottom: 30px;
+
+}
+
+.page-header h2 {
+
+    font-size: 30px;
+
+    color: #4638ff;
+
+    margin-bottom: 8px;
+
+}
+
+.page-header p {
+
+    color: #777;
+
+}
+
+.settings-card {
+
+    background: #fff;
+
+    border-radius: 18px;
+
+    padding: 25px;
+
+    margin-bottom: 25px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+
+}
+
+.settings-card h3 {
+
+    margin-bottom: 20px;
+
+}
+
+.form-group {
+
+    margin-bottom: 18px;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+.form-group label {
+
+    margin-bottom: 8px;
+
+    font-weight: 600;
+
+}
+
+.form-group input {
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    border: 1px solid #ddd;
+
+}
+
+.save-btn {
+
+    background: #5d4bff;
+
+    color: white;
+
+    border: none;
+
+    padding: 13px 30px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    transition: .3s;
+
+}
+
+.save-btn:hover {
+
+    transform: translateY(-2px);
+
+}
+
+.danger {
+
+    border-right: 5px solid #ff4f4f;
+
+}
+
+.logout-btn {
+
+    background: #ff4f4f;
+
+    color: white;
+
+    border: none;
+
+    padding: 14px 30px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+}
