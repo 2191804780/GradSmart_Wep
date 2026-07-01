@@ -174,6 +174,9 @@ Route::post('/student/password/update',
     [StudentAccountController::class,'updatePassword'])
     ->name('student.password.update');
 
+    Route::post('/project/analyze-ai', [ProjectController::class, 'analyzeWithAi'])
+    ->name('student.project.analyzeAi');
+
 });
 
 // --- Supervisor Routes ---

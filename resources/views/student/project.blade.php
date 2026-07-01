@@ -1,330 +1,303 @@
 @extends('layouts.student')
 
-@section('title', 'GradSmart — مشروعي')
+@section('title','GradSmart - مشروعي')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/student/student_dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('css/student/project.css') }}?v={{ time() }}">
 @endsection
 
 @section('content')
 
-@if ($errors->any())
-  <div class="card" style="background:#fee2e2;color:#991b1b;margin-bottom:16px">
-    @foreach ($errors->all() as $error)
-      <div>{{ $error }}</div>
+@if(session('success'))
+<div class="gs-alert gs-success">{{ session('success') }}</div>
+@endif
+
+@if($errors->any())
+<div class="gs-alert gs-error">
+    @foreach($errors->all() as $error)
+        <div>{{ $error }}</div>
     @endforeach
-  </div>
-@endif
-
-@if (session('success'))
-  <div class="card" style="background:#dcfce7;color:#166534;margin-bottom:16px">
-    {{ session('success') }}
-  </div>
-@endif
-
-@if (! $project)
-
-<div class="stats-grid">
-  <div class="stat-card blue">
-    <div class="stat-icon">👥</div>
-    <div class="stat-num">{{ $team->members()->count() }}</div>
-    <div class="stat-label">أعضاء الفريق</div>
-    <div class="stat-change up">{{ $team->name }}</div>
-  </div>
-
-  <div class="stat-card green">
-    <div class="stat-icon">🏫</div>
-    <div class="stat-num" style="font-size:1rem">{{ $team->department->name ?? 'غير محدد' }}</div>
-    <div class="stat-label">القسم</div>
-    <div class="stat-change up">قسم الفريق</div>
-  </div>
-
-  <div class="stat-card orange">
-    <div class="stat-icon">📋</div>
-    <div class="stat-num">0</div>
-    <div class="stat-label">المشاريع</div>
-    <div class="stat-change warn">لم يتم إنشاء مشروع بعد</div>
-  </div>
-
-  <div class="stat-card purple">
-    <div class="stat-icon">👨‍🏫</div>
-    <div class="stat-num" style="font-size:1rem">لا يوجد</div>
-    <div class="stat-label">المشرف</div>
-    <div class="stat-change up">يتم اختياره لاحقًا</div>
-  </div>
 </div>
+@endif
 
-<div class="progress-section">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">🚀 إنشاء مشروع التخرج</div>
-    </div>
+@if(!$project)
 
-    <form method="POST" action="{{ route('student.project.store') }}" style="display:flex;flex-direction:column;gap:16px">
-      @csrf
+<div class="empty-project-card">
+    <div class="empty-icon">🚀</div>
+    <h2>ابدأ إنشاء مشروع التخرج</h2>
+    <p>أنشئ مشروعك ليتمكن GradSmart من تحليل المشروع واقتراح المشرف المناسب.</p>
 
-      <div>
-        <label style="font-weight:800;font-size:.85rem">عنوان المشروع *</label>
-        <input name="title" value="{{ old('title') }}" required
-          placeholder="مثال: GradSmart — نظام إدارة مشاريع التخرج"
-          style="width:100%;margin-top:8px;padding:13px 15px;border:1.8px solid var(--border);border-radius:14px;font-family:'Cairo',sans-serif">
-      </div>
+    <form method="POST" action="{{ route('student.project.store') }}" class="project-form">
+        @csrf
 
-      <div>
-        <label style="font-weight:800;font-size:.85rem">وصف المشروع</label>
-        <textarea name="description" rows="5"
-          placeholder="اكتبي فكرة المشروع، المشكلة التي يحلها، والهدف الرئيسي منه..."
-          style="width:100%;margin-top:8px;padding:13px 15px;border:1.8px solid var(--border);border-radius:14px;font-family:'Cairo',sans-serif;line-height:1.8">{{ old('description') }}</textarea>
-      </div>
+        <label>عنوان المشروع</label>
+        <input type="text" name="title" value="{{ old('title') }}" required>
 
-      <div>
-        <label style="font-weight:800;font-size:.85rem">الكلمات المفتاحية</label>
-        <input name="keywords" value="{{ old('keywords') }}"
-          placeholder="AI, Laravel, Web, Education"
-          style="width:100%;margin-top:8px;padding:13px 15px;border:1.8px solid var(--border);border-radius:14px;font-family:'Cairo',sans-serif">
-        <div style="font-size:.72rem;color:var(--muted);margin-top:6px">
-          ستُستخدم لاحقًا في اقتراح المشرف المناسب.
-        </div>
-      </div>
+        <label>وصف المشروع</label>
+        <textarea name="description" rows="4">{{ old('description') }}</textarea>
 
-      <div>
-        <label style="font-weight:800;font-size:.85rem">تاريخ التسليم المتوقع *</label>
-        <input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}" required
-          style="width:100%;margin-top:8px;padding:13px 15px;border:1.8px solid var(--border);border-radius:14px;font-family:'Cairo',sans-serif">
-      </div>
+        <label>الكلمات المفتاحية</label>
+        <input type="text" name="keywords" value="{{ old('keywords') }}" placeholder="web, AI, Laravel">
 
-      <button class="msg-btn" type="submit" style="margin-top:6px">
-        إنشاء المشروع
-      </button>
+        <label>تاريخ التسليم المتوقع</label>
+        <input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}" required>
+
+        <button type="submit" class="main-btn">إنشاء المشروع</button>
     </form>
-  </div>
-
-  <div style="display:flex;flex-direction:column;gap:16px;">
-    <div class="risk-card">
-      <div class="card-header">
-        <div class="card-title">💡 ملاحظات مهمة</div>
-      </div>
-
-      <div class="risk-factors">
-        <div class="risk-factor">
-          <span class="rf-label">اكتبي عنوانًا واضحًا للمشروع</span>
-          <div class="rf-bar-wrap"><div class="rf-bar" style="width:85%;background:var(--green)"></div></div>
-        </div>
-
-        <div class="risk-factor">
-          <span class="rf-label">الكلمات المفتاحية تساعد في اقتراح المشرف</span>
-          <div class="rf-bar-wrap"><div class="rf-bar" style="width:70%;background:var(--blue)"></div></div>
-        </div>
-
-        <div class="risk-factor">
-          <span class="rf-label">بعد إنشاء المشروع ننتقل لإدارة المهام</span>
-          <div class="rf-bar-wrap"><div class="rf-bar" style="width:60%;background:var(--purple)"></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 @else
 
-<div class="stats-grid">
-  <div class="stat-card blue">
-    <div class="stat-icon">📋</div>
-    <div class="stat-num">1</div>
-    <div class="stat-label">مشروع الفريق</div>
-    <div class="stat-change up">{{ $project->status }}</div>
-  </div>
+<div class="project-page">
 
-  <div class="stat-card green">
-    <div class="stat-icon">👥</div>
-    <div class="stat-num">{{ $team->members()->count() }}</div>
-    <div class="stat-label">أعضاء الفريق</div>
-    <div class="stat-change up">{{ $team->name }}</div>
-  </div>
+    <div class="project-hero">
+        <div class="hero-icon">🚀</div>
 
-  <div class="stat-card orange">
-    <div class="stat-icon">📊</div>
-    <div class="stat-num">{{ $project->progress }}%</div>
-    <div class="stat-label">نسبة الإنجاز</div>
-    <div class="stat-change warn">تُحسب من المهام لاحقًا</div>
-  </div>
-
-  <div class="stat-card purple">
-    <div class="stat-icon">👨‍🏫</div>
-    <div class="stat-num" style="font-size:1rem">
-      {{ $project->supervisor->name ?? 'لا يوجد' }}
-    </div>
-    <div class="stat-label">المشرف</div>
-    <div class="stat-change up">اختيار المشرف لاحقًا</div>
-  </div>
-</div>
-
-<div class="progress-section">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">📂 بيانات المشروع</div>
-      <a class="card-action" href="/student/progress">عرض التقدم ←</a>
-    </div>
-
-    <div class="project-info">
-      <div class="project-emoji">🌐</div>
-      <div>
-        <div class="project-name">{{ $project->title }}</div>
-        <div class="project-meta">
-          🏫 {{ $team->department->name ?? 'غير محدد' }}
-          &nbsp;|&nbsp; 👥 {{ $team->members()->count() }} أعضاء
-          &nbsp;|&nbsp; 📅 {{ $project->expected_end_date }}
-        </div>
-      </div>
-    </div>
-
-    <p style="color:var(--muted);font-size:.85rem;line-height:1.9;margin:16px 0">
-      {{ $project->description ?? 'لا يوجد وصف للمشروع.' }}
-    </p>
-
-    <div class="mini-stats">
-      <div class="mini-stat">
-        <div class="mini-stat-num" style="color:var(--blue)">🏷️</div>
-        <div class="mini-stat-label">{{ $project->keywords ?? 'لا توجد كلمات مفتاحية' }}</div>
-      </div>
-
-      <div class="mini-stat">
-        <div class="mini-stat-num" style="color:var(--green)">{{ $project->status }}</div>
-        <div class="mini-stat-label">حالة المشروع</div>
-      </div>
-
-      <div class="mini-stat">
-        <div class="mini-stat-num" style="color:var(--orange)">0</div>
-        <div class="mini-stat-label">المهام حاليًا</div>
-      </div>
-
-      <div class="mini-stat">
-        <div class="mini-stat-num" style="color:var(--purple)">{{ $project->progress }}%</div>
-        <div class="mini-stat-label">الإنجاز</div>
-      </div>
-    </div>
-  </div>
-
-  <div style="display:flex;flex-direction:column;gap:16px;">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">👨‍🏫 المشرف</div>
-      </div>
-
-      <div class="supervisor-card">
-        <div class="sup-avatar">؟</div>
-        <div>
-          <div class="sup-name">{{ $project->supervisor->name ?? 'لم يتم اختيار مشرف بعد' }}</div>
-          <div class="sup-title">سيتم ربط المشرف لاحقًا حسب الكلمات المفتاحية</div>
-        </div>
-        <div class="sup-status">⏳ قيد الاختيار</div>
-      </div>
-
-      <a href="#supervisor-section" class="msg-btn" style="margin-top:14px;text-decoration:none;text-align:center;display:block">
-        👨‍🏫 اختيار مشرف
-      </a>
-    </div>
-  </div>
-</div>
-
-<div class="bottom-row">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">✅ الخطوة التالية</div>
-    </div>
-
-    <a href="{{ route('student.tasks.index') }}" style="text-decoration:none;color:inherit;display:block;">
-      <div class="task-item">
-        <div class="task-check inprogress"></div>
-
-        <div class="task-info">
-          <div class="task-name">الانتقال إلى إدارة المهام</div>
-          <div class="task-meta">
-            <span>بعد إنشاء المشروع</span>
-            <span>ابدئي بإنشاء المهام وربطها بالمشروع</span>
-          </div>
+        <div class="hero-info">
+            <h1>{{ $project->title }}</h1>
+            <p>
+                فريق {{ $team->name }} يعمل على المشروع
+                
+                
+            </p>
         </div>
 
-        <span class="task-tag tag-progress">إدارة المهام</span>
-      </div>
-    </a>
-  </div>
-
-  <div class="card" id="supervisor-section">
-    <div class="card-header">
-      <div class="card-title">👨‍🏫 اختيار المشرف</div>
+        <div class="hero-meta">
+           
+            <div>
+                <span>المتبقي للتسليم</span>
+                <strong>{{ $daysLeft !== null ? max($daysLeft, 0) : '--' }} أيام</strong>
+            </div>
+        </div>
     </div>
 
-    @if($project->supervisor)
+    <div class="stats-row">
 
-      <div class="supervisor-card">
-        <div class="sup-avatar">
-          {{ mb_substr($project->supervisor->name, 0, 1) }}
+        <div class="mini-card purple">
+            <div class="mini-icon">🧠</div>
+            <span>اقتراح الذكاء الاصطناعي</span>
+            <strong>{{ $aiScore ?: '--' }}%</strong>
+            <small>{{ $recommendedSupervisor->name ?? 'لا يوجد اقتراح' }}</small>
         </div>
 
-        <div>
-          <div class="sup-name">
-            {{ $project->supervisor->name }}
-          </div>
-
-          <div class="sup-title">
-            تم قبول الإشراف على المشروع
-          </div>
+        <div class="mini-card green">
+            <div class="mini-icon">📈</div>
+            <span>تقدم المشروع</span>
+            <strong>{{ $project->progress }}%</strong>
+            <small>نسبة الإنجاز الحالية</small>
         </div>
 
-        <div class="sup-status">
-          ✅ مرتبط
+        <div class="mini-card blue">
+            <div class="mini-icon">🕒</div>
+            <span>آخر تحليل</span>
+            <strong>
+                {{ $aiReport ? \Carbon\Carbon::parse($aiReport->generated_at)->format('d/m/Y') : '--' }}
+            </strong>
+            <small>
+                {{ $aiReport ? \Carbon\Carbon::parse($aiReport->generated_at)->format('h:i A') : 'لم يتم التحليل' }}
+            </small>
         </div>
-      </div>
 
-    @elseif($pendingRequest)
-
-      <div class="last-note">
-        ⏳ يوجد طلب إشراف قيد الانتظار.
-
-        <div class="note-from">
-          بانتظار رد المشرف.
+        <div class="mini-card green-soft">
+            <div class="mini-icon">✅</div>
+            <span>حالة المشروع</span>
+            <strong>{{ $project->status }}</strong>
+            <small>قيد التنفيذ</small>
         </div>
-      </div>
 
-    @else
+    </div>
 
-      @forelse($supervisors as $supervisor)
+    <div class="project-grid">
 
-        <div class="supervisor-card" style="margin-bottom:12px">
-          <div class="sup-avatar">
-            {{ mb_substr($supervisor->name, 0, 1) }}
-          </div>
+        <div class="panel info-panel">
+            <h3>ⓘ معلومات المشروع</h3>
 
-          <div>
-            <div class="sup-name">
-              {{ $supervisor->name }}
+            <div class="info-list">
+                <div>
+                    <span>العنوان</span>
+                    <strong>{{ $project->title }}</strong>
+                </div>
+
+                <div>
+                    <span>القسم</span>
+                    <strong>{{ $team->department->name ?? 'غير محدد' }}</strong>
+                </div>
+
+                <div>
+                    <span>الفريق</span>
+                    <strong>{{ $team->name }}</strong>
+                </div>
+
+                <div>
+                    <span>عدد الأعضاء</span>
+                    <strong>{{ $team->members->count() }}</strong>
+                </div>
+
+                <div>
+                    <span>موعد التسليم</span>
+                    <strong>{{ $project->expected_end_date ?? 'غير محدد' }}</strong>
+                </div>
+
+                <div>
+                    <span>الكلمات المفتاحية</span>
+                    <strong>{{ $project->keywords ?? 'لا توجد' }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel timeline-panel">
+            <h3>تقدم المراحل</h3>
+
+            <div class="stage done">
+                <span>إنشاء الفريق</span>
+                <b>مكتمل</b>
+                <i>✓</i>
             </div>
 
-            <div class="sup-title">
-              {{ $supervisor->email }}
+            <div class="stage done">
+                <span>إنشاء المشروع</span>
+                <b>مكتمل</b>
+                <i>✓</i>
             </div>
-          </div>
 
-          <form method="POST" action="{{ route('student.project.requestSupervisor', $supervisor->id) }}">
-            @csrf
+            <div class="stage {{ $project->supervisor ? 'done' : 'active' }}">
+                <span>اختيار المشرف</span>
+                <b>{{ $project->supervisor ? 'مكتمل' : 'قيد التنفيذ' }}</b>
+                <i>{{ $project->supervisor ? '✓' : '○' }}</i>
+            </div>
 
-            <button class="msg-btn">
-              إرسال طلب
-            </button>
-          </form>
+            <div class="stage {{ $project->supervisor ? 'done' : 'active' }}">
+                <span>بدء تنفيذ المهام</span>
+                <b> {{ $project->tasks->isNotEmpty() ? 'مكتمل' : 'قيد التنفيذ'}} </b> 
+                <i>{{ $project->tasks->isNotEmpty() ? '✓' : '○' }}</i>
+                
+            </div>
+
+            <div class="stage {{ $project->report_submitted ? 'done' : 'active' }}">
+                <span>رفع التقرير</span>
+                <b> {{ $project->report_submitted ? 'مكتمل' : 'قيد التنفيذ'}} </b> 
+                <i>{{ $project->report_submitted ? '✓' : '○' }}</i>
+            </div>
+
+            <div class="stage {{ $project->final_submission ? 'done' : 'active' }}">
+                <span>التسليم النهائي</span>
+                <b> {{ $project->final_submission ? 'مكتمل' : 'قيد التنفيذ'}} </b> 
+                <i>{{ $project->final_submission ? '✓' : '○' }}</i>
+            </div>
         </div>
 
-      @empty
+        <div class="panel ai-panel">
+            <h3>✦ التحليل الذكي للمشروع</h3>
 
-        <div class="last-note">
-          لا يوجد مشرفون متاحون في هذا القسم حالياً.
+            <div class="ai-ring">
+                <span>{{ $aiScore ?: '--' }}%</span>
+            </div>
+
+            <p>نسبة التوافق مع المشروع</p>
+
+            @if($aiReasons && count($aiReasons))
+                <ul class="ai-reasons">
+                    @foreach($aiReasons as $reason)
+                        <li>✅ {{ $reason }}</li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="empty-text">لم يتم إنشاء تحليل بعد.</div>
+            @endif
+
+            <form method="POST" action="{{ route('student.project.analyzeAi') }}">
+                @csrf
+                <button type="submit" class="main-btn ai-btn">
+                    🤖 تحليل المشروع بالذكاء الاصطناعي
+                </button>
+            </form>
         </div>
 
-      @endforelse
+        <div class="panel supervisor-panel">
+            <h3>👨‍🏫 المشرف المقترح</h3>
 
-    @endif
-  </div>
+            @if($project->supervisor)
+                <div class="supervisor-box">
+                    <div class="avatar">{{ mb_substr($project->supervisor->name, 0, 1) }}</div>
+
+                    <div>
+                        <strong>{{ $project->supervisor->name }}</strong>
+                        <span>دكتور</span>
+                    </div>
+
+                    <b class="accepted-badge">تم القبول</b>
+                </div>
+
+                <div class="green-note">✅ تم قبول طلب الإشراف على المشروع</div>
+
+            @elseif($pendingRequest)
+                <div class="orange-note">⏳ يوجد طلب إشراف قيد الانتظار</div>
+
+            @elseif($recommendedSupervisor)
+                <div class="supervisor-box">
+                    <div class="avatar">{{ mb_substr($recommendedSupervisor->name, 0, 1) }}</div>
+
+                    <div>
+                        <strong>{{ $recommendedSupervisor->name }}</strong>
+                        <span>{{ $recommendedSupervisor->email }}</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ route('student.project.requestSupervisor', $recommendedSupervisor->id) }}">
+                    @csrf
+                    <button type="submit" class="main-btn">اختيار المشرف المقترح</button>
+                </form>
+
+            @else
+                <div class="empty-text">لا يوجد مشرف مقترح حتى الآن.</div>
+            @endif
+        </div>
+
+        <div class="panel actions-panel">
+            <h3>⚡ إجراءات سريعة</h3>
+
+            <a href="{{ route('student.tasks.index') }}">
+                <span>إدارة المهام</span>
+                <i>☑️</i>
+            </a>
+
+            <a href="{{ route('student.chat.index') }}">
+                <span>المحادثة</span>
+                <i>💬</i>
+            </a>
+
+            <a href="{{ route('student.progress.index') }}">
+                <span>متابعة التقدم</span>
+                <i>📊</i>
+            </a>
+        </div>
+
+        <div class="panel supervisors-panel">
+            <h3>👥 المشرفون المتاحون</h3>
+
+            @if(!$project->supervisor && !$pendingRequest)
+                @forelse($supervisors->take(3) as $supervisor)
+                    <div class="sup-row">
+                        <div>
+                            <strong>{{ $supervisor->name }}</strong>
+                            <span>{{ $supervisor->email }}</span>
+                        </div>
+
+                        <form method="POST" action="{{ route('student.project.requestSupervisor', $supervisor->id) }}">
+                            @csrf
+                            <button type="submit">اختيار</button>
+                        </form>
+                    </div>
+                @empty
+                    <div class="empty-text">لا يوجد مشرفون متاحون.</div>
+                @endforelse
+            @else
+                <div class="green-note">تم تعيين المشرف لهذا المشروع.</div>
+            @endif
+        </div>
+
+    </div>
+
 </div>
 
 @endif
